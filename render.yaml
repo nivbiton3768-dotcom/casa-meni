@@ -4,14 +4,15 @@ services:
     name: casa-meni-api
     repo: https://github.com/nivbiton3768-dotcom/casa-meni
     rootDir: apps/api
+    plan: free
     buildCommand: npm install && npx prisma generate && npm run build
     startCommand: node dist/main
     envVars:
       - key: DATABASE_URL
-        sync: false
+        value: postgresql://neondb_owner:npg_iM9ypJUXTOZ8@ep-late-field-ak714l7x.c-3.us-west-2.aws.neon.tech/neondb?sslmode=require
       - key: JWT_SECRET
-        sync: false
+        value: casa-meni-prod-jwt-secret-2026
       - key: FRONTEND_URL
-        sync: false
+        value: https://web-chi-six-85.vercel.app
       - key: NODE_ENV
         value: production
