@@ -29,6 +29,7 @@ model Organization {
   vendors         Vendor[]
   investors       Investor[]
   reservations    Reservation[]
+  notifications   Notification[]
 
   @@map("organizations")
 }
@@ -69,6 +70,7 @@ model User {
   messages          Message[]
   cleaningSchedules CleaningSchedule[]  @relation("CleaningAssignee")
   auditLogs         AuditLog[]
+  notifications     Notification[]
 
   @@unique([organizationId, email])
   @@map("users")
@@ -527,6 +529,38 @@ model Listing {
   property Property @relation(fields: [propertyId], references: [id])
 
   @@map("listings")
+}
+
+// ──────────────────────────────────────
+// Notifications
+// ──────────────────────────────────────
+
+enum NotificationType {
+  PAYMENT_OVERDUE
+  LEASE_EXPIRING
+  MAINTENANCE_UPDATE
+  RENOVATION_BUDGET
+  RESERVATION_UPCOMING
+  GENERAL
+}
+
+model Notification {
+  id             String           @id @default(cuid())
+  organizationId String           @map("organization_id")
+  userId         String?          @map("user_id")
+  type           NotificationType
+  title          String
+  message        String
+  linkUrl        String?          @map("link_url")
+  isRead         Boolean          @default(false) @map("is_read")
+  createdAt      DateTime         @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User?        @relation(fields: [userId], references: [id])
+
+  @@index([organizationId, isRead])
+  @@index([userId, isRead])
+  @@map("notifications")
 }
 
 // ──────────────────────────────────────
