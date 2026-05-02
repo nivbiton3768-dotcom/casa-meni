@@ -24,10 +24,18 @@ import { StripeModule } from './stripe/stripe.module';
 import { PaymentsModule } from './payments/payments.module';
 import { PlaidModule } from './plaid/plaid.module';
 import { BankingModule } from './banking/banking.module';
+import { QueueModule } from './queue/queue.module';
+import { ChannelsModule } from './channels/channels.module';
+import { OnboardingModule } from './onboarding/onboarding.module';
+import { ExportsModule } from './exports/exports.module';
+import { AuditModule } from './audit/audit.module';
+import { GuestPortalModule } from './guest-portal/guest-portal.module';
+import { SuppliesModule } from './supplies/supplies.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    QueueModule,
     EmailModule,
     StripeModule,
     PlaidModule,
@@ -52,6 +60,12 @@ import { BankingModule } from './banking/banking.module';
     SigningModule,
     PaymentsModule,
     BankingModule,
+    ChannelsModule,
+    OnboardingModule,
+    ExportsModule,
+    AuditModule,
+    GuestPortalModule,
+    SuppliesModule,
   ],
 })
 export class AppModule {}

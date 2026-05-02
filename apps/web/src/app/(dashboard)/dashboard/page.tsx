@@ -3,6 +3,7 @@
 import { useApi } from '@/hooks/use-api';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { OnboardingChecklist } from '@/components/onboarding-checklist';
 import { formatCents } from '@/lib/utils';
 import {
   Building2,
@@ -44,6 +45,8 @@ export default function DashboardPage() {
           your portfolio overview.
         </p>
       </div>
+
+      <OnboardingChecklist />
 
       {loading ? (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">

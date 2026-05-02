@@ -34,6 +34,7 @@ model Organization {
   signingEnvelopes SigningEnvelope[]
   bankAccounts     BankAccount[]
   bankTransactions BankTransaction[]
+  channelFeeds     ChannelFeed[]
 
   @@map("organizations")
 }
@@ -153,6 +154,15 @@ model Property {
   longitude      Decimal?       @db.Decimal(10, 7)
   imageUrl       String?        @map("image_url")
   notes          String?
+  // Knowledge base / welcome guide
+  wifiName       String?        @map("wifi_name")
+  wifiPassword   String?        @map("wifi_password")
+  parkingInfo    String?        @map("parking_info")
+  utilityNotes   String?        @map("utility_notes")
+  applianceNotes String?        @map("appliance_notes")
+  emergencyContacts String?     @map("emergency_contacts")
+  houseRules     String?        @map("house_rules")
+  localRecommendations String?  @map("local_recommendations")
   createdAt      DateTime       @default(now()) @map("created_at")
   updatedAt      DateTime       @updatedAt @map("updated_at")
 
@@ -165,6 +175,7 @@ model Property {
   reservations    Reservation[]
   renovations     Renovation[]
   listings        Listing[]
+  channelFeeds    ChannelFeed[]
 
   @@map("properties")
 }
@@ -192,6 +203,7 @@ model Unit {
   maintenanceJobs   MaintenanceJob[]
   reservations      Reservation[]
   cleaningSchedules CleaningSchedule[]
+  channelFeeds      ChannelFeed[]
 
   @@unique([propertyId, unitNumber])
   @@map("units")
@@ -219,6 +231,18 @@ model Lease {
   rentAmountCents Int        @map("rent_amount_cents")
   depositCents   Int         @map("deposit_cents")
   lateFeesCents  Int         @default(0) @map("late_fees_cents")
+  // Late fee policy
+  gracePeriodDays Int        @default(5) @map("grace_period_days")
+  lateFeeFlatCents Int       @default(0) @map("late_fee_flat_cents")
+  lateFeePercentBps Int      @default(0) @map("late_fee_percent_bps") // 500 = 5%
+  // Auto-pay
+  autopayEnabled Boolean     @default(false) @map("autopay_enabled")
+  autopayDayOfMonth Int?     @map("autopay_day_of_month")
+  stripeCustomerId String?   @map("stripe_customer_id")
+  stripePaymentMethodId String? @map("stripe_payment_method_id")
+  autopayMethodLast4 String? @map("autopay_method_last4")
+  autopayMethodBrand String? @map("autopay_method_brand")
+  autopayEnabledAt DateTime? @map("autopay_enabled_at")
   createdAt      DateTime    @default(now()) @map("created_at")
   updatedAt      DateTime    @updatedAt @map("updated_at")
 
@@ -284,6 +308,7 @@ model Reservation {
   guestPhone     String?           @map("guest_phone")
   channel        String?           // airbnb, vrbo, direct, booking
   externalId     String?           @map("external_id")
+  channelFeedId  String?           @map("channel_feed_id")
   status         ReservationStatus @default(INQUIRY)
   checkIn        DateTime          @map("check_in")
   checkOut       DateTime          @map("check_out")
@@ -291,6 +316,7 @@ model Reservation {
   totalCents     Int               @map("total_cents")
   cleaningFeeCents Int             @default(0) @map("cleaning_fee_cents")
   notes          String?
+  guestToken     String?           @unique @map("guest_token")
   createdAt      DateTime          @default(now()) @map("created_at")
   updatedAt      DateTime          @updatedAt @map("updated_at")
 
@@ -298,8 +324,63 @@ model Reservation {
   property          Property           @relation(fields: [propertyId], references: [id])
   unit              Unit?              @relation(fields: [unitId], references: [id])
   cleaningSchedules CleaningSchedule[]
+  channelFeed       ChannelFeed?       @relation(fields: [channelFeedId], references: [id])
 
+  @@unique([channelFeedId, externalId])
   @@map("reservations")
+}
+
+// ──────────────────────────────────────
+// Channel Manager (iCal-based MVP)
+// ──────────────────────────────────────
+
+enum ChannelProvider {
+  AIRBNB
+  VRBO
+  BOOKING
+  OTHER
+}
+
+model SupplyItem {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  propertyId     String?  @map("property_id")
+  unitId         String?  @map("unit_id")
+  name           String
+  category       String?  // toiletries, cleaning, kitchen, linens, etc.
+  unit           String?  // rolls, bottles, sheets
+  parLevel       Int      @default(1) @map("par_level")
+  currentQty     Int      @default(0) @map("current_qty")
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([organizationId])
+  @@map("supply_items")
+}
+
+model ChannelFeed {
+  id             String          @id @default(cuid())
+  organizationId String          @map("organization_id")
+  propertyId     String          @map("property_id")
+  unitId         String?         @map("unit_id")
+  provider       ChannelProvider
+  name           String
+  importUrl      String          @map("import_url")
+  exportToken    String          @unique @map("export_token")
+  isActive       Boolean         @default(true) @map("is_active")
+  lastSyncedAt   DateTime?       @map("last_synced_at")
+  lastSyncError  String?         @map("last_sync_error")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+
+  organization Organization  @relation(fields: [organizationId], references: [id])
+  property     Property      @relation(fields: [propertyId], references: [id])
+  unit         Unit?         @relation(fields: [unitId], references: [id])
+  reservations Reservation[]
+
+  @@index([organizationId, isActive])
+  @@map("channel_feeds")
 }
 
 model CleaningSchedule {
@@ -354,6 +435,13 @@ model MaintenanceJob {
   actualCostCents Int?       @map("actual_cost_cents")
   scheduledDate  DateTime?   @map("scheduled_date")
   completedAt    DateTime?   @map("completed_at")
+  // Tenant rating after job completion
+  rating         Int?        // 1-5
+  ratingComment  String?     @map("rating_comment")
+  ratedAt        DateTime?   @map("rated_at")
+  // Time logging
+  workMinutes    Int?        @map("work_minutes")
+  travelMinutes  Int?        @map("travel_minutes")
   createdAt      DateTime    @default(now()) @map("created_at")
   updatedAt      DateTime    @updatedAt @map("updated_at")
 

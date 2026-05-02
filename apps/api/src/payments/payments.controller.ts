@@ -43,6 +43,44 @@ export class PaymentsController {
   ) {
     return this.service.getSessionResult(userId, sessionId);
   }
+
+  @Get('autopay/:leaseId')
+  getAutopay(
+    @CurrentUser('id') userId: string,
+    @Param('leaseId') leaseId: string,
+  ) {
+    return this.service.getAutopayStatus(userId, leaseId);
+  }
+
+  @Post('autopay/:leaseId/setup')
+  startAutopay(
+    @CurrentUser('id') userId: string,
+    @Param('leaseId') leaseId: string,
+  ) {
+    return this.service.startAutopaySetup(userId, leaseId);
+  }
+
+  @Post('autopay/:leaseId/confirm')
+  confirmAutopay(
+    @CurrentUser('id') userId: string,
+    @Param('leaseId') leaseId: string,
+    @Body() body: { paymentMethodId: string; dayOfMonth: number },
+  ) {
+    return this.service.confirmAutopay({
+      userId,
+      leaseId,
+      paymentMethodId: body.paymentMethodId,
+      dayOfMonth: body.dayOfMonth,
+    });
+  }
+
+  @Post('autopay/:leaseId/cancel')
+  cancelAutopay(
+    @CurrentUser('id') userId: string,
+    @Param('leaseId') leaseId: string,
+  ) {
+    return this.service.cancelAutopay(userId, leaseId);
+  }
 }
 
 @Controller('webhooks')

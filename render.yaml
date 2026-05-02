@@ -39,3 +39,8 @@ services:
       #   value: your_plaid_secret
       # - key: PLAID_ENV
       #   value: sandbox
+      # Optional: enable async background jobs (BullMQ + Redis).
+      # On Render, add a Redis instance (free tier 25MB) and use its internal URL.
+      # Without REDIS_URL, jobs run inline synchronously (still works, just no retries).
+      # - key: REDIS_URL
+      #   value: redis://red-xxx:6379

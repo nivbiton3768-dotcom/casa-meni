@@ -20,6 +20,7 @@ import {
   Bell,
   PenLine,
   Landmark,
+  Globe,
 } from 'lucide-react';
 
 const navigation = [
@@ -27,6 +28,7 @@ const navigation = [
   { name: 'Properties', href: '/properties', icon: Building2 },
   { name: 'Tenants', href: '/tenants', icon: Users },
   { name: 'Reservations', href: '/reservations', icon: CalendarDays },
+  { name: 'Channels', href: '/channels', icon: Globe },
   { name: 'Maintenance', href: '/maintenance', icon: Wrench },
   { name: 'Renovations', href: '/renovations', icon: Hammer },
   { name: 'Transactions', href: '/transactions', icon: DollarSign },

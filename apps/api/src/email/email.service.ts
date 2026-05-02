@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
 import {
@@ -13,6 +13,7 @@ import {
   TenantWelcomeEmailVars,
   NotificationEmailVars,
 } from './templates';
+import { QueueService } from '../queue/queue.service';
 
 interface SendArgs {
   to: string | string[];
@@ -23,13 +24,16 @@ interface SendArgs {
 }
 
 @Injectable()
-export class EmailService {
+export class EmailService implements OnModuleInit {
   private readonly logger = new Logger(EmailService.name);
   private readonly resend: Resend | null;
   private readonly from: string;
   private readonly enabled: boolean;
 
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly config: ConfigService,
+    private readonly queue: QueueService,
+  ) {
     const apiKey = this.config.get<string>('RESEND_API_KEY');
     this.from =
       this.config.get<string>('EMAIL_FROM') ||
@@ -46,14 +50,30 @@ export class EmailService {
     }
   }
 
-  private async send(args: SendArgs): Promise<{ ok: boolean; id?: string }> {
-    const recipients = Array.isArray(args.to) ? args.to : [args.to];
-    const validRecipients = recipients.filter(
+  onModuleInit() {
+    this.queue.registerWorker('send-email', async (payload) => {
+      await this.actuallySend({
+        to: payload.to,
+        subject: payload.subject,
+        html: payload.html,
+        text: payload.text,
+      });
+    });
+  }
+
+  private filterRecipients(to: string | string[]): string[] {
+    const recipients = Array.isArray(to) ? to : [to];
+    return recipients.filter(
       (r) => r && r.includes('@') && !r.endsWith('@example.com'),
     );
+  }
 
+  private async actuallySend(args: SendArgs): Promise<{ ok: boolean; id?: string }> {
+    const validRecipients = this.filterRecipients(args.to);
     if (validRecipients.length === 0) {
-      this.logger.debug(`Skipping email — no valid recipients: ${recipients.join(', ')}`);
+      this.logger.debug(
+        `Skipping email — no valid recipients: ${(Array.isArray(args.to) ? args.to : [args.to]).join(', ')}`,
+      );
       return { ok: false };
     }
 
@@ -84,28 +104,60 @@ export class EmailService {
     }
   }
 
+  /**
+   * Enqueue an email for sending. With Redis, runs async with retries; without,
+   * runs inline (preserving existing single-process behaviour).
+   */
+  private async enqueueOrSend(args: SendArgs): Promise<void> {
+    const validRecipients = this.filterRecipients(args.to);
+    if (validRecipients.length === 0) {
+      this.logger.debug('Skipping email — no valid recipients');
+      return;
+    }
+    for (const to of validRecipients) {
+      await this.queue.enqueue(
+        'send-email',
+        {
+          to,
+          subject: args.subject,
+          html: args.html,
+          text: args.text,
+        },
+        {},
+        async (payload) => {
+          await this.actuallySend({
+            to: payload.to,
+            subject: payload.subject,
+            html: payload.html,
+            text: payload.text,
+          });
+        },
+      );
+    }
+  }
+
   async sendSigningRequest(to: string, vars: SigningRequestEmailVars) {
     const tpl = signingRequestEmail(vars);
-    return this.send({ to, ...tpl });
+    await this.enqueueOrSend({ to, ...tpl });
   }
 
   async sendSigningCompleted(to: string, vars: SigningCompletedEmailVars) {
     const tpl = signingCompletedEmail(vars);
-    return this.send({ to, ...tpl });
+    await this.enqueueOrSend({ to, ...tpl });
   }
 
   async sendSigningDeclined(to: string, vars: SigningDeclinedEmailVars) {
     const tpl = signingDeclinedEmail(vars);
-    return this.send({ to, ...tpl });
+    await this.enqueueOrSend({ to, ...tpl });
   }
 
   async sendTenantWelcome(to: string, vars: TenantWelcomeEmailVars) {
     const tpl = tenantWelcomeEmail(vars);
-    return this.send({ to, ...tpl });
+    await this.enqueueOrSend({ to, ...tpl });
   }
 
   async sendNotification(to: string, vars: NotificationEmailVars) {
     const tpl = notificationEmail(vars);
-    return this.send({ to, ...tpl });
+    await this.enqueueOrSend({ to, ...tpl });
   }
 }

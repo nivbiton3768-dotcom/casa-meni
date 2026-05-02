@@ -45,4 +45,49 @@ export class CreatePropertyDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsString()
+  imageUrl?: string;
+
+  @IsOptional()
+  @IsNumber()
+  latitude?: number;
+
+  @IsOptional()
+  @IsNumber()
+  longitude?: number;
+
+  // Knowledge base / welcome guide
+  @IsOptional()
+  @IsString()
+  wifiName?: string;
+
+  @IsOptional()
+  @IsString()
+  wifiPassword?: string;
+
+  @IsOptional()
+  @IsString()
+  parkingInfo?: string;
+
+  @IsOptional()
+  @IsString()
+  utilityNotes?: string;
+
+  @IsOptional()
+  @IsString()
+  applianceNotes?: string;
+
+  @IsOptional()
+  @IsString()
+  emergencyContacts?: string;
+
+  @IsOptional()
+  @IsString()
+  houseRules?: string;
+
+  @IsOptional()
+  @IsString()
+  localRecommendations?: string;
 }

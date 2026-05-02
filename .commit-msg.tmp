@@ -1,0 +1,52 @@
+PWA, async jobs, channel manager, onboarding, and PRD-gap features
+
+PWA + offline shell:
+- Web manifest with shortcuts (Dashboard, Banking, Maintenance, Portal),
+  Apple touch icon, maskable PNG icons (192/384/512), theme color.
+- Service worker with network-first navigations, stale-while-revalidate
+  for static assets, and a never-cache rule for /api and 3rd-party hosts.
+- Install banner (Android Chrome beforeinstallprompt + iOS Add-to-Home-Screen
+  hint) with 14-day dismiss memory.
+
+Background jobs (BullMQ + Redis with graceful no-Redis fallback):
+- QueueService that registers workers and enqueues with retries/backoff
+  when REDIS_URL is set, runs handlers inline otherwise so the app keeps
+  working in single-process deployments.
+- Email sends, alert generation, Plaid sync, autopay, late fees, and
+  channel sync now route through the queue with cron schedules
+  (alerts hourly, autopay daily 9 UTC, late fees 9:15 UTC).
+
+Channel manager (Airbnb/VRBO/Booking via iCal):
+- ChannelFeed schema with bidirectional sync: import URLs pull bookings
+  with cursorless poll; we generate per-feed export.ics tokens that other
+  channels subscribe to so reservations cross-block automatically.
+- Conflict detection on overlapping reservations from different feeds.
+
+Onboarding:
+- /onboarding/checklist endpoint that computes 8 setup steps
+  (property, unit, tenant, bank/wallet, online pay, first payment,
+  channel, first doc) with dynamic copy based on enabled integrations.
+- Dashboard widget with progress bar + per-item CTAs, dismissible.
+
+PRD gaps closed:
+- Auto-pay (FR22): SetupIntent → off-session PaymentIntent recurring on
+  tenant-chosen day-of-month, with Stripe customer + payment-method
+  persistence and failure notifications.
+- Late fee policy per lease (FR14): grace period, flat + percent (bps),
+  applied idempotently by daily worker.
+- Maintenance ratings (FR26) + technician scoring (FR72): tenant rates
+  completed jobs 1–5; aggregate scores with avg rating, ratings count,
+  and avg resolution hours.
+- Property map view (FR4) endpoint with lat/lng + occupancy + open jobs
+  for each active property.
+- Property comparison (FR20) endpoint computing 12-month NOI, cap rate,
+  and cash-on-cash for any set of property IDs.
+- CSV exports (NFR26): transactions, rent roll, reservations.
+- Audit log surfacing (NFR11): generic AuditService + read endpoint
+  scoped to org via the user relation.
+- Property knowledge base (FR5): WiFi, parking, utilities, appliance
+  notes, emergency contacts, house rules, local recommendations.
+- Guest portal (FR54): per-reservation guestToken backing a public
+  /public/guest/:token endpoint that serves the welcome guide.
+- Supply inventory (FR52): SupplyItem CRUD + qty adjust + shopping
+  list (low-stock).

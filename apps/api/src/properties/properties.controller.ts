@@ -28,6 +28,20 @@ export class PropertiesController {
     return this.propertiesService.getDashboardStats(orgId);
   }
 
+  @Get('map')
+  listForMap(@CurrentUser('organizationId') orgId: string) {
+    return this.propertiesService.listMap(orgId);
+  }
+
+  @Get('compare')
+  compare(
+    @CurrentUser('organizationId') orgId: string,
+    @Query('ids') ids: string,
+  ) {
+    const list = (ids ?? '').split(',').filter(Boolean);
+    return this.propertiesService.compare(orgId, list);
+  }
+
   @Post()
   @Roles(Role.OWNER, Role.PROPERTY_MANAGER)
   create(

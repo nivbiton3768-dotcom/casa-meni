@@ -22,9 +22,153 @@ export class PropertiesService {
         purchaseDate: dto.purchaseDate ? new Date(dto.purchaseDate) : undefined,
         currentValue: dto.currentValue,
         notes: dto.notes,
+        imageUrl: dto.imageUrl,
+        latitude: dto.latitude,
+        longitude: dto.longitude,
+        wifiName: dto.wifiName,
+        wifiPassword: dto.wifiPassword,
+        parkingInfo: dto.parkingInfo,
+        utilityNotes: dto.utilityNotes,
+        applianceNotes: dto.applianceNotes,
+        emergencyContacts: dto.emergencyContacts,
+        houseRules: dto.houseRules,
+        localRecommendations: dto.localRecommendations,
       },
       include: { units: true, entity: true },
     });
+  }
+
+  async listMap(organizationId: string) {
+    const properties = await this.prisma.property.findMany({
+      where: { organizationId, status: 'ACTIVE' },
+      select: {
+        id: true,
+        name: true,
+        address: true,
+        city: true,
+        state: true,
+        zip: true,
+        type: true,
+        latitude: true,
+        longitude: true,
+        imageUrl: true,
+        units: {
+          select: {
+            id: true,
+            status: true,
+            rentAmountCents: true,
+          },
+        },
+        _count: {
+          select: {
+            maintenanceJobs: { where: { status: { in: ['OPEN', 'IN_PROGRESS', 'WAITING_PARTS'] } } },
+          },
+        },
+      },
+    });
+    return properties.map((p) => {
+      const total = p.units.length;
+      const occupied = p.units.filter((u) => u.status === 'OCCUPIED').length;
+      const totalRent = p.units.reduce((s, u) => s + u.rentAmountCents, 0);
+      return {
+        id: p.id,
+        name: p.name,
+        address: `${p.address}, ${p.city}, ${p.state} ${p.zip}`,
+        type: p.type,
+        latitude: p.latitude ? Number(p.latitude) : null,
+        longitude: p.longitude ? Number(p.longitude) : null,
+        imageUrl: p.imageUrl,
+        unitCount: total,
+        occupancyPct: total > 0 ? Math.round((occupied / total) * 100) : 0,
+        rentMonthlyCents: totalRent,
+        openJobs: p._count.maintenanceJobs,
+      };
+    });
+  }
+
+  async compare(organizationId: string, ids: string[]) {
+    if (ids.length === 0) return [];
+    const properties = await this.prisma.property.findMany({
+      where: { id: { in: ids }, organizationId },
+      include: {
+        units: { include: { leases: { where: { status: 'ACTIVE' } } } },
+      },
+    });
+
+    const result = await Promise.all(
+      properties.map(async (p) => {
+        const since = new Date();
+        since.setMonth(since.getMonth() - 12);
+
+        const [income, expenses, openJobs] = await Promise.all([
+          this.prisma.transaction.aggregate({
+            where: {
+              organizationId,
+              propertyId: p.id,
+              type: 'INCOME',
+              date: { gte: since },
+            },
+            _sum: { amountCents: true },
+          }),
+          this.prisma.transaction.aggregate({
+            where: {
+              organizationId,
+              propertyId: p.id,
+              type: 'EXPENSE',
+              date: { gte: since },
+            },
+            _sum: { amountCents: true },
+          }),
+          this.prisma.maintenanceJob.count({
+            where: {
+              organizationId,
+              propertyId: p.id,
+              status: { in: ['OPEN', 'IN_PROGRESS', 'WAITING_PARTS'] },
+            },
+          }),
+        ]);
+
+        const totalUnits = p.units.length;
+        const occupied = p.units.filter((u) => u.status === 'OCCUPIED').length;
+        const monthlyRent = p.units.reduce(
+          (s, u) => s + u.rentAmountCents,
+          0,
+        );
+        const annualIncome = income._sum.amountCents ?? 0;
+        const annualExpenses = expenses._sum.amountCents ?? 0;
+        const noi = annualIncome - annualExpenses;
+        const capRate =
+          p.purchasePrice && p.purchasePrice > 0
+            ? Number(((noi / p.purchasePrice) * 100).toFixed(2))
+            : null;
+        const cashOnCash =
+          p.currentValue && p.currentValue > 0
+            ? Number(((noi / p.currentValue) * 100).toFixed(2))
+            : null;
+
+        return {
+          id: p.id,
+          name: p.name,
+          address: `${p.address}, ${p.city}, ${p.state}`,
+          type: p.type,
+          totalUnits,
+          occupied,
+          occupancyPct:
+            totalUnits > 0 ? Math.round((occupied / totalUnits) * 100) : 0,
+          monthlyRentCents: monthlyRent,
+          purchasePriceCents: p.purchasePrice ?? null,
+          currentValueCents: p.currentValue ?? null,
+          annualIncomeCents: annualIncome,
+          annualExpensesCents: annualExpenses,
+          noiCents: noi,
+          capRatePct: capRate,
+          cashOnCashPct: cashOnCash,
+          openJobs,
+        };
+      }),
+    );
+
+    return result;
   }
 
   async findAll(organizationId: string, page = 1, pageSize = 20) {

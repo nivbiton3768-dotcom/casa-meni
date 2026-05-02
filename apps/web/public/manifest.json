@@ -1,0 +1,52 @@
+{
+  "name": "Casa Meni — Property Management",
+  "short_name": "Casa Meni",
+  "description": "All-in-one property management for owners, tenants, technicians, cleaning teams, and investors.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "categories": ["business", "productivity", "finance"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View your portfolio overview",
+      "url": "/dashboard"
+    },
+    {
+      "name": "Banking",
+      "short_name": "Banking",
+      "description": "Reconcile incoming rent",
+      "url": "/banking"
+    },
+    {
+      "name": "Maintenance",
+      "short_name": "Maintenance",
+      "description": "Track work orders",
+      "url": "/maintenance"
+    },
+    {
+      "name": "Tenant Portal",
+      "short_name": "Portal",
+      "description": "Pay rent and request maintenance",
+      "url": "/portal"
+    }
+  ]
+}

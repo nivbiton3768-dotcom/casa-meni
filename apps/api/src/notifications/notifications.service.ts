@@ -1,7 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
+import { QueueService } from '../queue/queue.service';
 import { NotificationType } from '@prisma/client';
 
 const EMAILABLE_TYPES: NotificationType[] = [
@@ -11,14 +12,58 @@ const EMAILABLE_TYPES: NotificationType[] = [
 ];
 
 @Injectable()
-export class NotificationsService {
+export class NotificationsService implements OnModuleInit {
   private readonly logger = new Logger(NotificationsService.name);
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly email: EmailService,
     private readonly config: ConfigService,
+    private readonly queue: QueueService,
   ) {}
+
+  async onModuleInit() {
+    this.queue.registerWorker('generate-alerts', async (payload) => {
+      if (payload.organizationId) {
+        await this.generateAlerts(payload.organizationId);
+      } else {
+        // Run for every org
+        const orgs = await this.prisma.organization.findMany({
+          select: { id: true },
+        });
+        for (const o of orgs) {
+          try {
+            await this.generateAlerts(o.id);
+          } catch (err) {
+            this.logger.error(
+              `Alert generation failed for org ${o.id}: ${err instanceof Error ? err.message : err}`,
+            );
+          }
+        }
+      }
+    });
+
+    // Run every hour at :05
+    await this.queue.scheduleRecurring(
+      'generate-alerts',
+      {},
+      { pattern: '5 * * * *' },
+    );
+  }
+
+  /** Public helper — enqueue alerts for one org or all. */
+  async enqueueAlerts(organizationId?: string) {
+    await this.queue.enqueue(
+      'generate-alerts',
+      organizationId ? { organizationId } : {},
+      {},
+      async (payload) => {
+        if (payload.organizationId) {
+          await this.generateAlerts(payload.organizationId);
+        }
+      },
+    );
+  }
 
   private getFrontendUrl(): string {
     const url =

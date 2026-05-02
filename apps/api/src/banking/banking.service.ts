@@ -3,6 +3,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -16,6 +17,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { PlaidService } from '../plaid/plaid.service';
 import { EmailService } from '../email/email.service';
+import { QueueService } from '../queue/queue.service';
 import {
   TransactionMatcherService,
   MatchablePayment,
@@ -28,7 +30,7 @@ import {
 } from './dto/banking.dto';
 
 @Injectable()
-export class BankingService {
+export class BankingService implements OnModuleInit {
   private readonly logger = new Logger(BankingService.name);
 
   constructor(
@@ -37,7 +39,33 @@ export class BankingService {
     private readonly email: EmailService,
     private readonly matcher: TransactionMatcherService,
     private readonly config: ConfigService,
+    private readonly queue: QueueService,
   ) {}
+
+  async onModuleInit() {
+    this.queue.registerWorker('plaid-sync-org', async (payload) => {
+      try {
+        await this.syncAll(payload.organizationId);
+      } catch (err) {
+        this.logger.error(
+          `plaid-sync-org failed for ${payload.organizationId}: ${err instanceof Error ? err.message : err}`,
+        );
+        throw err;
+      }
+    });
+  }
+
+  /** Trigger an async sync (queue if Redis available, inline otherwise). */
+  async enqueueSync(organizationId: string) {
+    await this.queue.enqueue(
+      'plaid-sync-org',
+      { organizationId },
+      {},
+      async (p) => {
+        await this.syncAll(p.organizationId);
+      },
+    );
+  }
 
   // ──────────────────────────────────────
   // Settings

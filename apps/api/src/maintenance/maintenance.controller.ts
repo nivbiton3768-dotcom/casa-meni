@@ -71,4 +71,18 @@ export class MaintenanceController {
   ) {
     return this.maintenanceService.addMessage(jobId, userId, body);
   }
+
+  @Post(':id/rate')
+  rate(
+    @Param('id') jobId: string,
+    @CurrentUser('id') userId: string,
+    @Body() body: { rating: number; comment?: string },
+  ) {
+    return this.maintenanceService.rate(jobId, userId, body.rating, body.comment);
+  }
+
+  @Get('reports/technician-scores')
+  technicianScores(@CurrentUser('organizationId') orgId: string) {
+    return this.maintenanceService.getTechnicianScores(orgId);
+  }
 }
