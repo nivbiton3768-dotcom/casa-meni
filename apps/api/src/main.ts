@@ -9,8 +9,11 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api/v1');
 
+  const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+    .split(',')
+    .map((o) => o.trim());
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: allowedOrigins,
     credentials: true,
   });
 
@@ -25,9 +28,9 @@ async function bootstrap() {
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalInterceptors(new TransformInterceptor());
 
-  const port = process.env.API_PORT || 4000;
-  await app.listen(port);
-  console.log(`Casa Meni API running on http://localhost:${port}/api/v1`);
+  const port = process.env.PORT || process.env.API_PORT || 4000;
+  await app.listen(port, '0.0.0.0');
+  console.log(`Casa Meni API running on port ${port}`);
 }
 
 bootstrap();

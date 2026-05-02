@@ -13,7 +13,12 @@ export class PrismaService
 
   constructor(configService: ConfigService) {
     const connectionString = configService.get<string>('DATABASE_URL');
-    const pool = new Pool({ connectionString });
+    const pool = new Pool({
+      connectionString,
+      ssl: connectionString?.includes('neon.tech')
+        ? { rejectUnauthorized: false }
+        : undefined,
+    });
     const adapter = new PrismaPg(pool);
     super({ adapter });
     this.pool = pool;
