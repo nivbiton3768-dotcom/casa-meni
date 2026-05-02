@@ -30,3 +30,12 @@ services:
       #   value: whsec_...
       # - key: STRIPE_PUBLISHABLE_KEY
       #   value: pk_test_...
+      # Optional: enable bank/Cash App/Chime auto-sync via Plaid.
+      # Sign up: https://dashboard.plaid.com/signup (free sandbox + production after review).
+      # PLAID_ENV=sandbox for testing, production once your app is approved.
+      # - key: PLAID_CLIENT_ID
+      #   value: your_plaid_client_id
+      # - key: PLAID_SECRET
+      #   value: your_plaid_secret
+      # - key: PLAID_ENV
+      #   value: sandbox

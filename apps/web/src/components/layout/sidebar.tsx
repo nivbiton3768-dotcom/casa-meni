@@ -19,6 +19,7 @@ import {
   BarChart3,
   Bell,
   PenLine,
+  Landmark,
 } from 'lucide-react';
 
 const navigation = [
@@ -29,6 +30,7 @@ const navigation = [
   { name: 'Maintenance', href: '/maintenance', icon: Wrench },
   { name: 'Renovations', href: '/renovations', icon: Hammer },
   { name: 'Transactions', href: '/transactions', icon: DollarSign },
+  { name: 'Banking', href: '/banking', icon: Landmark },
   { name: 'Investors', href: '/investors', icon: PieChart },
   { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Notifications', href: '/notifications', icon: Bell },

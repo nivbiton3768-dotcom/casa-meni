@@ -32,6 +32,8 @@ model Organization {
   notifications   Notification[]
   uploads         Upload[]
   signingEnvelopes SigningEnvelope[]
+  bankAccounts     BankAccount[]
+  bankTransactions BankTransaction[]
 
   @@map("organizations")
 }
@@ -243,7 +245,7 @@ model Payment {
   amountCents             Int            @map("amount_cents")
   dueDate                 DateTime       @map("due_date")
   paidAt                  DateTime?      @map("paid_at")
-  method                  String?        // stripe, check, cash, ach, zelle, etc.
+  method                  String?        // stripe, check, cash, ach, zelle, plaid, etc.
   status                  PaymentStatus  @default(PENDING)
   stripePaymentId         String?        @map("stripe_payment_id")
   stripeCheckoutSessionId String?        @unique @map("stripe_checkout_session_id")
@@ -253,7 +255,8 @@ model Payment {
   createdAt               DateTime       @default(now()) @map("created_at")
   updatedAt               DateTime       @default(now()) @updatedAt @map("updated_at")
 
-  lease Lease @relation(fields: [leaseId], references: [id])
+  lease            Lease             @relation(fields: [leaseId], references: [id])
+  bankTransactions BankTransaction[]
 
   @@index([leaseId, status])
   @@map("payments")
@@ -561,6 +564,8 @@ enum NotificationType {
   RESERVATION_UPCOMING
   SIGNATURE_REQUEST
   SIGNATURE_COMPLETED
+  PAYMENT_AUTO_MATCHED
+  BANK_SYNC_REVIEW
   GENERAL
 }
 
@@ -674,6 +679,92 @@ model SignatureRequest {
 
   @@index([envelopeId])
   @@map("signature_requests")
+}
+
+// ──────────────────────────────────────
+// Banking & Wallet Reconciliation
+// ──────────────────────────────────────
+
+enum BankAccountProvider {
+  PLAID
+  MANUAL
+}
+
+enum BankAccountType {
+  CHECKING
+  SAVINGS
+  CREDIT
+  WALLET
+  OTHER
+}
+
+model BankAccount {
+  id                String              @id @default(cuid())
+  organizationId    String              @map("organization_id")
+  provider          BankAccountProvider
+  type              BankAccountType     @default(CHECKING)
+  name              String
+  institutionName   String?             @map("institution_name")
+  mask              String?
+  // Plaid-only fields (encrypted-ish; stored opaquely)
+  plaidItemId       String?             @map("plaid_item_id")
+  plaidAccountId    String?             @unique @map("plaid_account_id")
+  plaidAccessToken  String?             @map("plaid_access_token")
+  plaidCursor       String?             @map("plaid_cursor")
+  // Running cached balance (cents)
+  currentBalanceCents Int               @default(0) @map("current_balance_cents")
+  lastSyncedAt      DateTime?           @map("last_synced_at")
+  isActive          Boolean             @default(true) @map("is_active")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+
+  organization Organization      @relation(fields: [organizationId], references: [id])
+  transactions BankTransaction[]
+
+  @@index([organizationId, isActive])
+  @@map("bank_accounts")
+}
+
+enum BankTransactionDirection {
+  INCOMING
+  OUTGOING
+}
+
+enum BankTransactionMatchStatus {
+  UNMATCHED
+  MATCHED
+  IGNORED
+  REVIEW
+}
+
+model BankTransaction {
+  id                String                     @id @default(cuid())
+  organizationId    String                     @map("organization_id")
+  bankAccountId     String                     @map("bank_account_id")
+  externalId        String?                    @map("external_id")
+  direction         BankTransactionDirection
+  amountCents       Int                        @map("amount_cents")
+  description       String
+  merchantName      String?                    @map("merchant_name")
+  counterpartyName  String?                    @map("counterparty_name")
+  date              DateTime
+  category          String?
+  matchStatus       BankTransactionMatchStatus @default(UNMATCHED)
+  matchedPaymentId  String?                    @map("matched_payment_id")
+  matchedAt         DateTime?                  @map("matched_at")
+  matchedAutomatically Boolean                 @default(false) @map("matched_automatically")
+  notes             String?
+  createdAt         DateTime                   @default(now()) @map("created_at")
+  updatedAt         DateTime                   @updatedAt @map("updated_at")
+
+  organization  Organization @relation(fields: [organizationId], references: [id])
+  bankAccount   BankAccount  @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  matchedPayment Payment?    @relation(fields: [matchedPaymentId], references: [id])
+
+  @@unique([bankAccountId, externalId])
+  @@index([organizationId, matchStatus])
+  @@index([bankAccountId, date])
+  @@map("bank_transactions")
 }
 
 // ──────────────────────────────────────

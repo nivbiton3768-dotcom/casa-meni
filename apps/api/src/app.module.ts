@@ -22,12 +22,15 @@ import { SigningModule } from './signing/signing.module';
 import { EmailModule } from './email/email.module';
 import { StripeModule } from './stripe/stripe.module';
 import { PaymentsModule } from './payments/payments.module';
+import { PlaidModule } from './plaid/plaid.module';
+import { BankingModule } from './banking/banking.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     EmailModule,
     StripeModule,
+    PlaidModule,
     PrismaModule,
     AuthModule,
     PropertiesModule,
@@ -48,6 +51,7 @@ import { PaymentsModule } from './payments/payments.module';
     UploadsModule,
     SigningModule,
     PaymentsModule,
+    BankingModule,
   ],
 })
 export class AppModule {}
