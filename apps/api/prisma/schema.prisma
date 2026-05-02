@@ -35,6 +35,13 @@ model Organization {
   bankAccounts     BankAccount[]
   bankTransactions BankTransaction[]
   channelFeeds     ChannelFeed[]
+  journalEntries   JournalEntry[]
+  loans            Loan[]
+  preventiveTasks  PreventiveTask[]
+  assets           Asset[]
+  capitalCalls     CapitalCall[]
+  deals            Deal[]
+  webhookSubscriptions WebhookSubscription[]
 
   @@map("organizations")
 }
@@ -70,6 +77,7 @@ model User {
 
   organization      Organization        @relation(fields: [organizationId], references: [id])
   leases            Lease[]             @relation("TenantLeases")
+  leaseSplits       LeaseSplit[]        @relation("LeaseSplits")
   assignedJobs      MaintenanceJob[]    @relation("AssignedTech")
   createdJobs       MaintenanceJob[]    @relation("CreatedBy")
   messages          Message[]
@@ -77,6 +85,7 @@ model User {
   auditLogs         AuditLog[]
   notifications     Notification[]
   uploads           Upload[]
+  capitalCommitments CapitalCallCommitment[]
 
   @@unique([organizationId, email])
   @@map("users")
@@ -176,6 +185,8 @@ model Property {
   renovations     Renovation[]
   listings        Listing[]
   channelFeeds    ChannelFeed[]
+  loans           Loan[]
+  capitalCalls    CapitalCall[]
 
   @@map("properties")
 }
@@ -251,8 +262,26 @@ model Lease {
   tenant       User          @relation("TenantLeases", fields: [tenantId], references: [id])
   payments     Payment[]
   documents    Document[]
+  splits       LeaseSplit[]
+  securityDeposits SecurityDeposit[]
 
   @@map("leases")
+}
+
+// Roommate splits (FR23) — each row points to a co-tenant + their share %.
+model LeaseSplit {
+  id          String   @id @default(cuid())
+  leaseId     String   @map("lease_id")
+  tenantId    String   @map("tenant_id")
+  sharePct    Int      @map("share_pct") // 0-100, integer percentage
+  payOnAutopay Boolean @default(false) @map("pay_on_autopay")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  lease  Lease @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  tenant User  @relation("LeaseSplits", fields: [tenantId], references: [id])
+
+  @@unique([leaseId, tenantId])
+  @@map("lease_splits")
 }
 
 enum PaymentStatus {
@@ -451,6 +480,7 @@ model MaintenanceJob {
   createdBy    User         @relation("CreatedBy", fields: [createdById], references: [id])
   assignedTo   User?        @relation("AssignedTech", fields: [assignedToId], references: [id])
   messages     Message[]
+  partReceipts PartReceipt[]
 
   @@map("maintenance_jobs")
 }
@@ -467,6 +497,124 @@ model Message {
   sender User           @relation(fields: [senderId], references: [id])
 
   @@map("messages")
+}
+
+// ──────────────────────────────────────
+// Preventive Maintenance + Assets (FR39, FR40)
+// ──────────────────────────────────────
+
+enum MaintenanceCadence {
+  MONTHLY
+  QUARTERLY
+  SEMI_ANNUAL
+  ANNUAL
+  CUSTOM_DAYS
+}
+
+model PreventiveTask {
+  id             String              @id @default(cuid())
+  organizationId String              @map("organization_id")
+  propertyId     String?             @map("property_id")
+  unitId         String?             @map("unit_id")
+  assetId        String?             @map("asset_id")
+  title          String
+  description    String?
+  cadence        MaintenanceCadence
+  cadenceDays    Int?                @map("cadence_days") // when CUSTOM_DAYS
+  lastCompletedAt DateTime?          @map("last_completed_at")
+  nextDueAt      DateTime            @map("next_due_at")
+  isActive       Boolean             @default(true) @map("is_active")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  asset        Asset?       @relation(fields: [assetId], references: [id])
+
+  @@index([organizationId, isActive, nextDueAt])
+  @@map("preventive_tasks")
+}
+
+enum AssetType {
+  HVAC
+  WATER_HEATER
+  REFRIGERATOR
+  STOVE
+  DISHWASHER
+  WASHER
+  DRYER
+  ROOF
+  WINDOWS
+  PLUMBING
+  ELECTRICAL
+  SMART_LOCK
+  OTHER
+}
+
+model Asset {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  propertyId     String    @map("property_id")
+  unitId         String?   @map("unit_id")
+  type           AssetType
+  name           String
+  brand          String?
+  modelNumber    String?   @map("model_number")
+  serialNumber   String?   @map("serial_number")
+  purchaseDate   DateTime? @map("purchase_date")
+  purchaseCost   Int?      @map("purchase_cost") // cents
+  warrantyExpires DateTime? @map("warranty_expires")
+  notes          String?
+  // Smart-lock fields (FR53)
+  smartLockProvider String? @map("smart_lock_provider") // august, schlage, yale
+  smartLockDeviceId String? @map("smart_lock_device_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  organization     Organization     @relation(fields: [organizationId], references: [id])
+  preventiveTasks  PreventiveTask[]
+  smartLockCodes   SmartLockCode[]
+
+  @@index([organizationId, propertyId])
+  @@map("assets")
+}
+
+// Parts captured by barcode scanning (FR38)
+model PartReceipt {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  jobId          String?  @map("job_id")
+  propertyId     String?  @map("property_id")
+  barcode        String?
+  description    String
+  amountCents    Int      @map("amount_cents")
+  vendorName     String?  @map("vendor_name")
+  receiptUrl     String?  @map("receipt_url")
+  scannedAt      DateTime @default(now()) @map("scanned_at")
+
+  job MaintenanceJob? @relation(fields: [jobId], references: [id])
+
+  @@index([organizationId, scannedAt])
+  @@map("part_receipts")
+}
+
+// Smart lock codes (FR53)
+model SmartLockCode {
+  id             String   @id @default(cuid())
+  assetId        String   @map("asset_id")
+  reservationId  String?  @map("reservation_id")
+  code           String
+  validFrom      DateTime @map("valid_from")
+  validUntil     DateTime @map("valid_until")
+  guestName      String?  @map("guest_name")
+  status         String   @default("ACTIVE") // ACTIVE, EXPIRED, REVOKED
+  externalId     String?  @map("external_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  asset Asset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+  @@index([validFrom, validUntil])
+  @@map("smart_lock_codes")
 }
 
 // ──────────────────────────────────────
@@ -493,10 +641,30 @@ model Renovation {
   createdAt      DateTime         @default(now()) @map("created_at")
   updatedAt      DateTime         @updatedAt @map("updated_at")
 
-  property Property          @relation(fields: [propertyId], references: [id])
-  expenses RenovationExpense[]
+  property   Property             @relation(fields: [propertyId], references: [id])
+  expenses   RenovationExpense[]
+  milestones RenovationMilestone[]
 
   @@map("renovations")
+}
+
+// Milestone-based renovation payments (FR60)
+model RenovationMilestone {
+  id           String    @id @default(cuid())
+  renovationId String    @map("renovation_id")
+  name         String
+  description  String?
+  orderIdx     Int       @default(0) @map("order_idx")
+  triggerPercent Int     @default(0) @map("trigger_percent") // % of budget unlocked
+  paymentCents Int       @default(0) @map("payment_cents")
+  completedAt  DateTime? @map("completed_at")
+  paidAt       DateTime? @map("paid_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  renovation Renovation @relation(fields: [renovationId], references: [id], onDelete: Cascade)
+
+  @@index([renovationId])
+  @@map("renovation_milestones")
 }
 
 model RenovationExpense {
@@ -529,19 +697,165 @@ model Transaction {
   id             String          @id @default(cuid())
   organizationId String          @map("organization_id")
   propertyId     String?         @map("property_id")
+  vendorId       String?         @map("vendor_id")
   type           TransactionType
   category       String          // rent, maintenance, utilities, insurance, taxes, mortgage
   description    String
   amountCents    Int             @map("amount_cents")
   date           DateTime
   receiptUrl     String?         @map("receipt_url")
+  // AI categorization
+  aiCategorized  Boolean         @default(false) @map("ai_categorized")
+  aiConfidence   Decimal?        @map("ai_confidence") @db.Decimal(3, 2)
   createdAt      DateTime        @default(now()) @map("created_at")
   updatedAt      DateTime        @updatedAt @map("updated_at")
 
   organization Organization @relation(fields: [organizationId], references: [id])
   property     Property?    @relation(fields: [propertyId], references: [id])
+  vendor       Vendor?      @relation(fields: [vendorId], references: [id])
 
+  @@index([organizationId, date])
+  @@index([organizationId, vendorId])
   @@map("transactions")
+}
+
+// ──────────────────────────────────────
+// Double-entry accounting (FR10)
+// ──────────────────────────────────────
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  INCOME
+  EXPENSE
+}
+
+model Account {
+  id             String      @id @default(cuid())
+  organizationId String      @map("organization_id")
+  code           String
+  name           String
+  type           AccountType
+  parentId       String?     @map("parent_id")
+  isActive       Boolean     @default(true) @map("is_active")
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  parent  Account?       @relation("AccountTree", fields: [parentId], references: [id])
+  children Account[]     @relation("AccountTree")
+  lines   JournalLine[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, type])
+  @@map("accounts")
+}
+
+model JournalEntry {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  date           DateTime
+  description    String
+  reference      String?  // e.g., payment id, transaction id, invoice number
+  postedAt       DateTime? @map("posted_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  lines        JournalLine[]
+
+  @@index([organizationId, date])
+  @@map("journal_entries")
+}
+
+model JournalLine {
+  id          String   @id @default(cuid())
+  entryId     String   @map("entry_id")
+  accountId   String   @map("account_id")
+  debitCents  Int      @default(0) @map("debit_cents")
+  creditCents Int      @default(0) @map("credit_cents")
+  memo        String?
+
+  entry   JournalEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  account Account      @relation(fields: [accountId], references: [id])
+
+  @@index([accountId])
+  @@index([entryId])
+  @@map("journal_lines")
+}
+
+// Trust account ledger per security deposit (FR11)
+enum SecurityDepositStatus {
+  HELD
+  PARTIAL_REFUND
+  FULL_REFUND
+  FORFEITED
+}
+
+model SecurityDeposit {
+  id             String                @id @default(cuid())
+  leaseId        String                @map("lease_id")
+  bankAccountId  String?               @map("bank_account_id")
+  amountCents    Int                   @map("amount_cents")
+  receivedAt     DateTime              @map("received_at")
+  status         SecurityDepositStatus @default(HELD)
+  refundedCents  Int                   @default(0) @map("refunded_cents")
+  refundedAt     DateTime?             @map("refunded_at")
+  forfeitedReason String?              @map("forfeited_reason")
+  notes          String?
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+
+  lease Lease @relation(fields: [leaseId], references: [id])
+
+  @@index([leaseId])
+  @@map("security_deposits")
+}
+
+// Mortgage / Loan amortization (FR15)
+enum LoanType {
+  MORTGAGE
+  HELOC
+  PRIVATE
+  OTHER
+}
+
+model Loan {
+  id              String   @id @default(cuid())
+  organizationId  String   @map("organization_id")
+  propertyId      String?  @map("property_id")
+  type            LoanType @default(MORTGAGE)
+  lenderName      String   @map("lender_name")
+  principalCents  Int      @map("principal_cents")
+  rateBps         Int      @map("rate_bps") // basis points
+  termMonths      Int      @map("term_months")
+  startDate       DateTime @map("start_date")
+  monthlyPaymentCents Int  @map("monthly_payment_cents")
+  escrowCents     Int      @default(0) @map("escrow_cents")
+  notes           String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  property     Property?    @relation(fields: [propertyId], references: [id])
+
+  @@index([organizationId])
+  @@map("loans")
+}
+
+// 1099 vendor totals snapshot (FR12)
+model VendorTaxYear {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  vendorId       String   @map("vendor_id")
+  taxYear        Int      @map("tax_year")
+  totalCents     Int      @map("total_cents")
+  taxIdLast4     String?  @map("tax_id_last4")
+  pdfUrl         String?  @map("pdf_url")
+  generatedAt    DateTime @default(now()) @map("generated_at")
+
+  vendor Vendor @relation(fields: [vendorId], references: [id])
+
+  @@unique([vendorId, taxYear])
+  @@map("vendor_tax_years")
 }
 
 model Distribution {
@@ -550,11 +864,83 @@ model Distribution {
   amountCents  Int      @map("amount_cents")
   date         DateTime
   notes        String?
+  classification String? // "RETURN_OF_CAPITAL" | "PROFIT"
   createdAt    DateTime @default(now()) @map("created_at")
 
   investor Investor @relation(fields: [investorId], references: [id])
 
   @@map("distributions")
+}
+
+// Capital calls (FR46)
+enum CapitalCallStatus {
+  DRAFT
+  SENT
+  CLOSED
+  CANCELLED
+}
+
+model CapitalCall {
+  id             String            @id @default(cuid())
+  organizationId String            @map("organization_id")
+  propertyId     String?           @map("property_id")
+  title          String
+  description    String?
+  totalCents     Int               @map("total_cents")
+  dueDate        DateTime          @map("due_date")
+  status         CapitalCallStatus @default(DRAFT)
+  dealPackageUrl String?           @map("deal_package_url")
+  sentAt         DateTime?         @map("sent_at")
+  closedAt       DateTime?         @map("closed_at")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  property     Property?    @relation(fields: [propertyId], references: [id])
+  commitments  CapitalCallCommitment[]
+
+  @@index([organizationId, status])
+  @@map("capital_calls")
+}
+
+enum CommitmentStatus {
+  PENDING
+  COMMITTED
+  DECLINED
+  FUNDED
+}
+
+model CapitalCallCommitment {
+  id            String           @id @default(cuid())
+  capitalCallId String           @map("capital_call_id")
+  investorUserId String          @map("investor_user_id")
+  amountCents   Int              @map("amount_cents")
+  status        CommitmentStatus @default(PENDING)
+  respondedAt   DateTime?        @map("responded_at")
+  fundedAt      DateTime?        @map("funded_at")
+  notes         String?
+
+  capitalCall CapitalCall @relation(fields: [capitalCallId], references: [id], onDelete: Cascade)
+  investor    User        @relation(fields: [investorUserId], references: [id])
+
+  @@unique([capitalCallId, investorUserId])
+  @@map("capital_call_commitments")
+}
+
+// K-1 / tax statements (FR45)
+model InvestorTaxStatement {
+  id          String   @id @default(cuid())
+  investorId  String   @map("investor_id")
+  taxYear     Int      @map("tax_year")
+  incomeCents Int      @map("income_cents")
+  expenseCents Int     @map("expense_cents")
+  distributionsCents Int @map("distributions_cents")
+  netCents    Int      @map("net_cents")
+  pdfUrl      String?  @map("pdf_url")
+  generatedAt DateTime @default(now()) @map("generated_at")
+
+  @@unique([investorId, taxYear])
+  @@map("investor_tax_statements")
 }
 
 // ──────────────────────────────────────
@@ -569,11 +955,18 @@ model Vendor {
   email          String?
   phone          String?
   notes          String?
+  // 1099 reporting (FR12)
+  taxId          String?  @map("tax_id") // EIN or SSN, full
+  isW9OnFile     Boolean  @default(false) @map("is_w9_on_file")
+  is1099Required Boolean  @default(true) @map("is_1099_required")
+  address        String?
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   organization       Organization        @relation(fields: [organizationId], references: [id])
   renovationExpenses RenovationExpense[]
+  transactions       Transaction[]
+  taxYears           VendorTaxYear[]
 
   @@map("vendors")
 }
@@ -654,6 +1047,10 @@ enum NotificationType {
   SIGNATURE_COMPLETED
   PAYMENT_AUTO_MATCHED
   BANK_SYNC_REVIEW
+  CAPITAL_CALL_INVITED
+  EMERGENCY_REPORTED
+  PREVENTIVE_MAINTENANCE_DUE
+  WARRANTY_EXPIRING
   GENERAL
 }
 
@@ -794,6 +1191,7 @@ model BankAccount {
   name              String
   institutionName   String?             @map("institution_name")
   mask              String?
+  isTrustAccount    Boolean             @default(false) @map("is_trust_account")
   // Plaid-only fields (encrypted-ish; stored opaquely)
   plaidItemId       String?             @map("plaid_item_id")
   plaidAccountId    String?             @unique @map("plaid_account_id")
@@ -871,4 +1269,171 @@ model AuditLog {
   user User @relation(fields: [userId], references: [id])
 
   @@map("audit_logs")
+}
+
+// ──────────────────────────────────────
+// Deal Pipeline & Disposition (FR63-69)
+// ──────────────────────────────────────
+
+enum DealStage {
+  LEAD
+  ANALYSIS
+  UNDER_CONTRACT
+  DUE_DILIGENCE
+  CLOSING
+  WON
+  LOST
+}
+
+enum DealKind {
+  ACQUISITION
+  DISPOSITION
+}
+
+model Deal {
+  id             String    @id @default(cuid())
+  organizationId String    @map("organization_id")
+  kind           DealKind  @default(ACQUISITION)
+  name           String
+  address        String?
+  city           String?
+  state          String?
+  zip            String?
+  stage          DealStage @default(LEAD)
+  askPriceCents  Int?      @map("ask_price_cents")
+  offerPriceCents Int?     @map("offer_price_cents")
+  // Underwriting inputs
+  estimatedRentCents Int?  @map("estimated_rent_cents")
+  estimatedExpensesCents Int? @map("estimated_expenses_cents")
+  estimatedRehabCents Int? @map("estimated_rehab_cents")
+  noiAnnualCents Int?      @map("noi_annual_cents")
+  capRateBps     Int?      @map("cap_rate_bps")
+  cashOnCashBps  Int?      @map("cash_on_cash_bps")
+  // AI scoring
+  aiScore        Int?      @map("ai_score") // 0-100
+  aiNotes        String?   @map("ai_notes")
+  // Closing
+  closedAt       DateTime? @map("closed_at")
+  propertyId     String?   @map("property_id") // links once converted
+  notes          String?
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  comps        DealComp[]
+  diligence    DealDiligence[]
+
+  @@index([organizationId, stage])
+  @@map("deals")
+}
+
+model DealComp {
+  id          String   @id @default(cuid())
+  dealId      String   @map("deal_id")
+  address     String
+  bedrooms    Int?
+  bathrooms   Decimal? @db.Decimal(3, 1)
+  sqft        Int?
+  soldPrice   Int?     @map("sold_price")
+  soldDate    DateTime? @map("sold_date")
+  pricePerSqft Int?    @map("price_per_sqft")
+  notes       String?
+
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
+  @@map("deal_comps")
+}
+
+model DealDiligence {
+  id        String   @id @default(cuid())
+  dealId    String   @map("deal_id")
+  category  String   // inspection, title, financing, etc.
+  item      String
+  done      Boolean  @default(false)
+  doneAt    DateTime? @map("done_at")
+  notes     String?
+  orderIdx  Int      @default(0) @map("order_idx")
+
+  deal Deal @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  @@index([dealId])
+  @@map("deal_diligence")
+}
+
+// ──────────────────────────────────────
+// Webhooks (NFR22)
+// ──────────────────────────────────────
+
+model WebhookSubscription {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  url            String
+  secret         String
+  events         String[] // e.g., "payment.received", "lease.created"
+  isActive       Boolean  @default(true) @map("is_active")
+  lastDeliveryAt DateTime? @map("last_delivery_at")
+  failureCount   Int      @default(0) @map("failure_count")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  deliveries   WebhookDelivery[]
+
+  @@index([organizationId])
+  @@map("webhook_subscriptions")
+}
+
+model WebhookDelivery {
+  id             String   @id @default(cuid())
+  subscriptionId String   @map("subscription_id")
+  event          String
+  payload        Json
+  statusCode     Int?     @map("status_code")
+  responseBody   String?  @map("response_body")
+  attempts       Int      @default(1)
+  succeeded      Boolean  @default(false)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  subscription WebhookSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId, createdAt])
+  @@map("webhook_deliveries")
+}
+
+// ──────────────────────────────────────
+// Tenant Emergency Escalation (FR30)
+// ──────────────────────────────────────
+
+enum EmergencySeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum EmergencyStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+model EmergencyEvent {
+  id             String            @id @default(cuid())
+  organizationId String            @map("organization_id")
+  propertyId     String?           @map("property_id")
+  unitId         String?           @map("unit_id")
+  reportedBy     String            @map("reported_by")
+  severity       EmergencySeverity @default(HIGH)
+  status         EmergencyStatus   @default(OPEN)
+  category       String            // gas, water, electric, intrusion, fire, medical
+  description    String
+  acknowledgedBy String?           @map("acknowledged_by")
+  acknowledgedAt DateTime?         @map("acknowledged_at")
+  resolvedAt     DateTime?         @map("resolved_at")
+  jobId          String?           @map("job_id")
+  createdAt      DateTime          @default(now()) @map("created_at")
+
+  @@index([organizationId, status])
+  @@map("emergency_events")
 }

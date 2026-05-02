@@ -9,7 +9,11 @@ export type JobName =
   | 'channel-sync-property'
   | 'sign-pdf-stamp'
   | 'run-autopay-charges'
-  | 'apply-late-fees';
+  | 'apply-late-fees'
+  | 'preventive-maintenance-scan'
+  | 'warranty-expiry-scan'
+  | 'webhook-deliver'
+  | 'ai-categorize-transaction';
 
 export interface JobPayloads {
   'send-email': {
@@ -24,6 +28,14 @@ export interface JobPayloads {
   'sign-pdf-stamp': { envelopeId: string };
   'run-autopay-charges': { date?: string };
   'apply-late-fees': Record<string, never>;
+  'preventive-maintenance-scan': Record<string, never>;
+  'warranty-expiry-scan': Record<string, never>;
+  'webhook-deliver': {
+    subscriptionId: string;
+    event: string;
+    payload: Record<string, unknown>;
+  };
+  'ai-categorize-transaction': { transactionId: string };
 }
 
 const QUEUE_NAME = 'casa-meni';

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiFetch } from '@/lib/utils';
@@ -24,6 +24,24 @@ const fmt = (cents: number) =>
   `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
 export default function PaymentSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-md py-10">
+          <Card>
+            <CardContent className="flex flex-col items-center p-8 text-center">
+              <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+            </CardContent>
+          </Card>
+        </div>
+      }
+    >
+      <PaymentSuccessInner />
+    </Suspense>
+  );
+}
+
+function PaymentSuccessInner() {
   const params = useSearchParams();
   const sessionId = params.get('session_id');
   const [data, setData] = useState<SessionResult | null>(null);

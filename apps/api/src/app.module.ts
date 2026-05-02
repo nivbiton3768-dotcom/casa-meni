@@ -31,6 +31,24 @@ import { ExportsModule } from './exports/exports.module';
 import { AuditModule } from './audit/audit.module';
 import { GuestPortalModule } from './guest-portal/guest-portal.module';
 import { SuppliesModule } from './supplies/supplies.module';
+import { AIModule } from './ai/ai.module';
+import { AccountingModule } from './accounting/accounting.module';
+import { TrustModule } from './trust/trust.module';
+import { Tax1099Module } from './tax-1099/tax-1099.module';
+import { LoansModule } from './loans/loans.module';
+import { LeaseSplitsModule } from './lease-splits/lease-splits.module';
+import { EmergencyModule } from './emergency/emergency.module';
+import { AssetsModule } from './assets/assets.module';
+import { PreventiveModule } from './preventive/preventive.module';
+import { SmartLocksModule } from './smart-locks/smart-locks.module';
+import { PartsModule } from './parts/parts.module';
+import { CapitalCallsModule } from './capital-calls/capital-calls.module';
+import { InvestorTaxModule } from './investor-tax/investor-tax.module';
+import { DealsModule } from './deals/deals.module';
+import { CostAnalyticsModule } from './cost-analytics/cost-analytics.module';
+import { RealtimeModule } from './realtime/realtime.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
+import { SecurityModule } from './security/rls.service';
 
 @Module({
   imports: [
@@ -40,10 +58,15 @@ import { SuppliesModule } from './supplies/supplies.module';
     StripeModule,
     PlaidModule,
     PrismaModule,
+    SecurityModule,
+    RealtimeModule,
+    WebhooksModule,
+    AIModule,
     AuthModule,
     PropertiesModule,
     UnitsModule,
     LeasesModule,
+    LeaseSplitsModule,
     MaintenanceModule,
     TransactionsModule,
     ReservationsModule,
@@ -66,6 +89,19 @@ import { SuppliesModule } from './supplies/supplies.module';
     AuditModule,
     GuestPortalModule,
     SuppliesModule,
+    AccountingModule,
+    TrustModule,
+    Tax1099Module,
+    LoansModule,
+    EmergencyModule,
+    AssetsModule,
+    PreventiveModule,
+    SmartLocksModule,
+    PartsModule,
+    CapitalCallsModule,
+    InvestorTaxModule,
+    DealsModule,
+    CostAnalyticsModule,
   ],
 })
 export class AppModule {}
