@@ -13,15 +13,19 @@ import {
   FileText,
   Settings,
   LogOut,
+  Hammer,
+  HardHat,
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Properties', href: '/properties', icon: Building2 },
-  { name: 'Maintenance', href: '/maintenance', icon: Wrench },
-  { name: 'Transactions', href: '/transactions', icon: DollarSign },
   { name: 'Tenants', href: '/tenants', icon: Users },
   { name: 'Reservations', href: '/reservations', icon: CalendarDays },
+  { name: 'Maintenance', href: '/maintenance', icon: Wrench },
+  { name: 'Renovations', href: '/renovations', icon: Hammer },
+  { name: 'Transactions', href: '/transactions', icon: DollarSign },
+  { name: 'Vendors', href: '/vendors', icon: HardHat },
   { name: 'Documents', href: '/documents', icon: FileText },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
