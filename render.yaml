@@ -1,0 +1,17 @@
+services:
+  - type: web
+    runtime: node
+    name: casa-meni-api
+    repo: https://github.com/nivbiton3768-dotcom/casa-meni
+    rootDir: apps/api
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: node dist/main
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: NODE_ENV
+        value: production
