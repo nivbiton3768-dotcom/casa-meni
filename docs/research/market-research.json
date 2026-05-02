@@ -1,0 +1,174 @@
+{
+  "meta": {
+    "product": "Casa Meni",
+    "research_date": "2026-05-02",
+    "description": "Market research for an all-in-one property management platform targeting small-to-mid real estate operators across the full property lifecycle (buy, renovate, rent, maintain, sell)."
+  },
+
+  "competitive_landscape": [
+    {
+      "name": "Buildium (RealPage)",
+      "approach": "Cloud-based property management for small-to-mid residential landlords. Covers accounting, leasing, maintenance requests, tenant/owner portals, and rent collection.",
+      "gaps": [
+        "No short-term rental (STR) management — cannot handle channel distribution, dynamic pricing, or guest messaging",
+        "No renovation/project management capabilities",
+        "No investment analysis or deal underwriting tools",
+        "Users report clunky interface, rigid maintenance-request editing, poor mobile experience, and opaque pricing with frequent unannounced increases",
+        "Customer support widely criticized for slow response times and unhelpful onboarding",
+        "Integration with third-party tools (inspections, custom websites) described as unreliable"
+      ]
+    },
+    {
+      "name": "AppFolio",
+      "approach": "Modern cloud-native PM platform for residential and light commercial portfolios. Emphasizes AI features (leasing assistant, smart maintenance), online payments, and a polished UI.",
+      "gaps": [
+        "No STR management module — purely long-term rental focused",
+        "No renovation tracking or construction project management",
+        "No investment analysis or acquisition underwriting",
+        "Perceived as expensive, especially for smaller operators; pricing is per-unit with minimums",
+        "Limited flexibility for operators who also flip or BRRRR properties"
+      ]
+    },
+    {
+      "name": "Guesty",
+      "approach": "Leading STR management platform. Covers multi-channel distribution (Airbnb, Vrbo, Booking.com), unified inbox, dynamic pricing integrations, cleaning task management, and direct booking websites. Offers tiers from single-property 'Lite' to enterprise.",
+      "gaps": [
+        "Exclusively focused on short-term rentals — no long-term lease management, no rent collection for traditional tenants",
+        "No accounting depth (no general ledger, no AP/AR, no 1099 generation)",
+        "No renovation or construction project tracking",
+        "No investment analysis or portfolio-level financial reporting for investors",
+        "Pricing can be high for smaller operators (percentage-of-revenue model)"
+      ]
+    },
+    {
+      "name": "DealCheck",
+      "approach": "Web-based deal analysis and underwriting tool for rental properties, BRRRRs, flips, and multifamily. Provides automated ROI calculations (CoC, IRR, ARV), financial projections, and professional PDF reports.",
+      "gaps": [
+        "Analysis-only tool — no property management, no tenant management, no maintenance tracking",
+        "No ongoing portfolio performance monitoring or bookkeeping",
+        "No renovation budget tracking or contractor management",
+        "No STR management capabilities",
+        "Data input is largely manual; limited integrations with live market data"
+      ]
+    },
+    {
+      "name": "Stessa (Roofstock)",
+      "approach": "Free cloud-based financial tracking for landlords. Automates income/expense tracking, provides tax-ready reports, and offers portfolio-level performance dashboards. Acquired by Roofstock.",
+      "gaps": [
+        "Passive tracking only — no active property management features (no maintenance, no tenant portals, no leasing workflows)",
+        "No STR management or channel distribution",
+        "No renovation project management",
+        "No deal analysis or underwriting tools",
+        "Limited to financial reporting; no operational workflows for teams"
+      ]
+    },
+    {
+      "name": "Buildertrend",
+      "approach": "Construction and renovation project management platform. Covers scheduling, budgeting, change orders, daily logs, client portals, and subcontractor coordination.",
+      "gaps": [
+        "Purely construction-focused — no property management, no tenant management, no rent collection",
+        "No STR or long-term rental management",
+        "No investment analysis or financial portfolio tracking",
+        "Designed for general contractors, not real estate investors; workflow assumptions don't match investor-operator needs",
+        "Expensive for small operators doing occasional renovations"
+      ]
+    },
+    {
+      "name": "QuickBooks (Intuit)",
+      "approach": "General-purpose small business accounting. Widely used by landlords for bookkeeping, invoicing, and tax preparation due to accountant familiarity and ecosystem breadth.",
+      "gaps": [
+        "Not purpose-built for real estate — no property/unit hierarchy, no lease tracking, no rent roll reporting",
+        "No tenant portals, maintenance requests, or operational PM features",
+        "No STR management, channel distribution, or guest communication",
+        "No renovation project management",
+        "Requires extensive manual customization (chart of accounts, classes) to approximate real estate workflows",
+        "Integration with PM tools is often unreliable, causing reconciliation headaches"
+      ]
+    },
+    {
+      "name": "Rent Manager (London Computer Systems)",
+      "approach": "Full-featured PM platform for residential, commercial, and HOA. Known for deep accounting, custom reporting, and operational flexibility.",
+      "gaps": [
+        "Steep learning curve and dated UI compared to modern competitors",
+        "No STR management capabilities",
+        "No renovation or construction project tracking",
+        "No investment analysis or deal underwriting",
+        "Better suited for mid-to-large operators; can be overkill for small portfolios"
+      ]
+    },
+    {
+      "name": "Hospitable (formerly Smartbnb)",
+      "approach": "STR automation platform favored by small hosts (1-10 properties). Specializes in automated guest messaging, review management, and task scheduling.",
+      "gaps": [
+        "Narrow feature set focused on messaging automation — not a full PM platform",
+        "No long-term rental management",
+        "No accounting, investment tracking, or financial reporting",
+        "No renovation management",
+        "Limited scalability for operators growing beyond 10-20 properties"
+      ]
+    },
+    {
+      "name": "Baselane",
+      "approach": "Modern fintech-forward platform for landlords combining banking, rent collection, bookkeeping, and property analytics. Targets independent landlords wanting a simpler alternative to Buildium.",
+      "gaps": [
+        "No STR management",
+        "No renovation or construction tracking",
+        "Limited operational PM features (no robust maintenance workflow, no vendor management)",
+        "No deal analysis or underwriting tools",
+        "Relatively new entrant with smaller feature set than established PM platforms"
+      ]
+    }
+  ],
+
+  "market_context": [
+    "The global property management software market is valued at approximately $3.2–7.1B in 2025, with projections reaching $5.9–17.1B by 2033-2035, depending on scope (CAGR 6.4–14.1% across sources).",
+    "Cloud/SaaS deployment is the dominant model, favored for scalability, remote access, and lower TCO — aligning perfectly with a modern all-in-one platform strategy.",
+    "AI integration is accelerating: predictive maintenance, automated tenant screening, dynamic pricing, generative AI for communications, and document processing are now table-stakes differentiators.",
+    "The STR management software market is estimated at $238M–2.4B in 2025-2026 (varying scope), growing at 4.6–20% CAGR. 61-71% of STR operators already use AI tools.",
+    "North America holds the largest market share for PM software, driven by a mature real estate industry, high tech adoption, and early AI/ML integration.",
+    "Mobile-first design is now essential: tenants, owners, and field teams expect full functionality from mobile devices for rent payments, maintenance requests, and real-time updates.",
+    "IoT and smart building integration (energy monitoring, HVAC control, predictive maintenance sensors) is an emerging differentiator in property management platforms.",
+    "The 'institutionalization' of residential real estate (REITs, PE firms entering SFR) is driving demand for enterprise-grade, centralized platforms — even smaller operators now expect similar capabilities.",
+    "STR supply growth is slowing (2.7% in North America by late 2025) and ADRs are flattening, pushing operators to focus on margin protection via operational efficiency and data-driven revenue management.",
+    "Direct booking is a rising priority for STR operators — 70% have a direct-booking site, but most still generate <25% of bookings through it, indicating a gap for better tooling."
+  ],
+
+  "user_sentiment": [
+    "Property managers report losing hours weekly switching between 3-7 disconnected platforms (PM, accounting, STR, renovation, analysis) to assemble basic operational information.",
+    "'App fatigue' is a documented phenomenon: both staff and tenants are overwhelmed by multiple logins, portals, and communication channels that don't sync.",
+    "Month-end accounting close is a major pain point — when PMS, bank feeds, and accounting software don't sync, controllers spend days on manual reconciliation.",
+    "Buildium users on Trustpilot and Reddit cite: rigid maintenance workflows, poor listing syndication, confusing property/unit structures for SFR, and unreliable third-party integrations.",
+    "AppFolio users cite high per-unit costs and limited flexibility for operators who also do flips, STR, or BRRRR strategies alongside traditional rentals.",
+    "Reddit threads show landlords using 4-6 separate tools simultaneously (e.g., Stessa for tracking + Buildium for PM + Guesty for STR + DealCheck for analysis + QuickBooks for taxes) and expressing strong desire for consolidation.",
+    "STR operators report that 'all-in-one' claims from existing platforms often fall short — integrations break, data doesn't flow properly, and workarounds erode productivity gains.",
+    "Small-to-mid operators (5-50 units) feel underserved: enterprise tools (Yardi, RealPage) are too complex and expensive, while entry-level tools (Stessa, TurboTenant) lack depth for growing portfolios.",
+    "Communication fragmentation is a top frustration: tenants, owners, maintenance techs, and guests all communicate through different channels with no unified thread.",
+    "Onboarding and customer support quality are major switching triggers — users report leaving Buildium and AppFolio specifically due to poor support experiences."
+  ],
+
+  "timing_and_opportunity": [
+    "The market is in a consolidation phase: major players are acquiring niche startups to build broader platforms (e.g., Roofstock acquiring Stessa, RealPage acquiring Buildium), but true all-in-one solutions remain elusive.",
+    "AI capabilities have matured enough to enable meaningful automation across PM, STR, accounting, and maintenance workflows — a new entrant can build AI-native from day one rather than bolting it on.",
+    "The 'hybrid rental' model (operators mixing LTR and STR on the same portfolio) is growing rapidly, but NO existing platform handles both well in a single interface.",
+    "Post-pandemic, remote/distributed property management is the norm — operators expect cloud-native, mobile-first tools that enable management from anywhere.",
+    "Small-to-mid operators (5-100 units) represent the largest addressable segment but are the most underserved: too sophisticated for basic tools, too small for enterprise platforms.",
+    "The BRRRR strategy (Buy, Rehab, Rent, Refinance, Repeat) has gone mainstream via BiggerPockets and social media, creating a large cohort of operators who need renovation + PM + analysis in one workflow.",
+    "Platform consolidation trends ('hub-and-spoke' models) show the industry is moving toward fewer, broader tools — operators are ready for a true all-in-one if it delivers on depth.",
+    "Regulatory complexity is increasing (STR regulations, rent control, fair housing) — a unified platform with compliance tooling built-in would have a strong moat.",
+    "Open banking and fintech APIs now make it feasible to embed banking, payments, and lending directly into a PM platform (see Baselane's model), enabling deeper financial integration.",
+    "The shift toward 'outcome-based' AI agents that can execute tasks across systems (not just display data) creates an opportunity for a platform that owns the entire workflow from acquisition to disposition."
+  ],
+
+  "risks_and_considerations": [
+    "Feature breadth vs. depth trade-off: attempting to replace 5+ specialized tools risks building a 'jack of all trades, master of none' that loses to focused competitors in each vertical.",
+    "Incumbent entrenchment: Buildium, AppFolio, and Guesty have large installed bases, brand recognition, and switching costs (data migration, workflow retraining) that create significant inertia.",
+    "Enterprise players moving downmarket: Yardi, RealPage, and MRI Software are increasingly offering scaled-down versions for smaller operators, potentially squeezing the mid-market.",
+    "Integration ecosystem dependency: even an all-in-one platform will need to integrate with OTAs (Airbnb, Vrbo), payment processors, banks, and government systems — each integration is a maintenance burden.",
+    "Accounting accuracy is mission-critical: any errors in financial reporting, tax calculations, or rent tracking can destroy trust immediately. This module requires extreme precision and CPA validation.",
+    "Multi-stakeholder complexity: serving 10+ distinct user personas (owner, tenant, tech, cleaner, investor, vendor, guest, accountant, inspector, agent) in one platform requires exceptional UX design to avoid cognitive overload.",
+    "Regulatory fragmentation: STR regulations vary by city/county/state and change frequently — keeping compliance features current is an ongoing operational cost.",
+    "Sales cycle and trust barriers: property managers are risk-averse about switching core operational tools. Long sales cycles and the need for robust data migration tools should be anticipated.",
+    "Capital intensity: building deep functionality across PM, STR, renovation, accounting, and investment analysis requires significant upfront engineering investment before reaching feature parity in any single vertical.",
+    "Market timing risk: if STR supply continues to plateau and regulations tighten, the STR management component may face headwinds even as the broader PM market grows."
+  ]
+}

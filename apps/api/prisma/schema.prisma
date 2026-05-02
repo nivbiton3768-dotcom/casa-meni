@@ -1,0 +1,548 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ──────────────────────────────────────
+// Multi-tenancy & Auth
+// ──────────────────────────────────────
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  logoUrl   String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users           User[]
+  properties      Property[]
+  entities        Entity[]
+  contacts        Contact[]
+  leases          Lease[]
+  transactions    Transaction[]
+  maintenanceJobs MaintenanceJob[]
+  documents       Document[]
+  vendors         Vendor[]
+  investors       Investor[]
+  reservations    Reservation[]
+
+  @@map("organizations")
+}
+
+enum Role {
+  OWNER
+  PROPERTY_MANAGER
+  TENANT
+  MAINTENANCE_TECH
+  CLEANING_TEAM
+  INVESTOR
+  VENDOR
+  GUEST
+  ACCOUNTANT
+  INSPECTOR
+}
+
+model User {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  email          String
+  passwordHash   String   @map("password_hash")
+  name           String
+  phone          String?
+  avatarUrl      String?  @map("avatar_url")
+  role           Role     @default(TENANT)
+  isActive       Boolean  @default(true) @map("is_active")
+  mfaEnabled     Boolean  @default(false) @map("mfa_enabled")
+  mfaSecret      String?  @map("mfa_secret")
+  lastLoginAt    DateTime? @map("last_login_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization      Organization        @relation(fields: [organizationId], references: [id])
+  leases            Lease[]             @relation("TenantLeases")
+  assignedJobs      MaintenanceJob[]    @relation("AssignedTech")
+  createdJobs       MaintenanceJob[]    @relation("CreatedBy")
+  messages          Message[]
+  cleaningSchedules CleaningSchedule[]  @relation("CleaningAssignee")
+  auditLogs         AuditLog[]
+
+  @@unique([organizationId, email])
+  @@map("users")
+}
+
+// ──────────────────────────────────────
+// Legal Entities (for investors / tax)
+// ──────────────────────────────────────
+
+model Entity {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  name           String
+  type           String   // LLC, S-Corp, Trust, etc.
+  ein            String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  properties   Property[]
+  investors    Investor[]
+
+  @@map("entities")
+}
+
+model Investor {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  entityId       String?  @map("entity_id")
+  name           String
+  email          String
+  phone          String?
+  ownershipPct   Decimal  @map("ownership_pct") @db.Decimal(5, 2)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization  Organization   @relation(fields: [organizationId], references: [id])
+  entity        Entity?        @relation(fields: [entityId], references: [id])
+  distributions Distribution[]
+
+  @@map("investors")
+}
+
+// ──────────────────────────────────────
+// Properties & Units
+// ──────────────────────────────────────
+
+enum PropertyType {
+  LONG_TERM_RENTAL
+  SHORT_TERM_RENTAL
+  RENOVATION
+  FOR_SALE
+}
+
+enum PropertyStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+model Property {
+  id             String         @id @default(cuid())
+  organizationId String         @map("organization_id")
+  entityId       String?        @map("entity_id")
+  name           String
+  address        String
+  city           String
+  state          String
+  zip            String
+  type           PropertyType
+  status         PropertyStatus @default(ACTIVE)
+  purchasePrice  Int?           @map("purchase_price")
+  purchaseDate   DateTime?      @map("purchase_date")
+  currentValue   Int?           @map("current_value")
+  latitude       Decimal?       @db.Decimal(10, 7)
+  longitude      Decimal?       @db.Decimal(10, 7)
+  imageUrl       String?        @map("image_url")
+  notes          String?
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  organization    Organization     @relation(fields: [organizationId], references: [id])
+  entity          Entity?          @relation(fields: [entityId], references: [id])
+  units           Unit[]
+  maintenanceJobs MaintenanceJob[]
+  transactions    Transaction[]
+  documents       Document[]
+  reservations    Reservation[]
+  renovations     Renovation[]
+  listings        Listing[]
+
+  @@map("properties")
+}
+
+enum UnitStatus {
+  VACANT
+  OCCUPIED
+  MAINTENANCE
+}
+
+model Unit {
+  id             String     @id @default(cuid())
+  propertyId     String     @map("property_id")
+  unitNumber     String     @map("unit_number")
+  bedrooms       Int
+  bathrooms      Decimal    @db.Decimal(3, 1)
+  sqft           Int?
+  rentAmountCents Int       @map("rent_amount_cents")
+  status         UnitStatus @default(VACANT)
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+
+  property          Property           @relation(fields: [propertyId], references: [id])
+  leases            Lease[]
+  maintenanceJobs   MaintenanceJob[]
+  reservations      Reservation[]
+  cleaningSchedules CleaningSchedule[]
+
+  @@unique([propertyId, unitNumber])
+  @@map("units")
+}
+
+// ──────────────────────────────────────
+// Leases (Long-Term)
+// ──────────────────────────────────────
+
+enum LeaseStatus {
+  DRAFT
+  ACTIVE
+  EXPIRED
+  TERMINATED
+}
+
+model Lease {
+  id             String      @id @default(cuid())
+  organizationId String      @map("organization_id")
+  unitId         String      @map("unit_id")
+  tenantId       String      @map("tenant_id")
+  status         LeaseStatus @default(DRAFT)
+  startDate      DateTime    @map("start_date")
+  endDate        DateTime    @map("end_date")
+  rentAmountCents Int        @map("rent_amount_cents")
+  depositCents   Int         @map("deposit_cents")
+  lateFeesCents  Int         @default(0) @map("late_fees_cents")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  organization Organization  @relation(fields: [organizationId], references: [id])
+  unit         Unit          @relation(fields: [unitId], references: [id])
+  tenant       User          @relation("TenantLeases", fields: [tenantId], references: [id])
+  payments     Payment[]
+  documents    Document[]
+
+  @@map("leases")
+}
+
+model Payment {
+  id           String   @id @default(cuid())
+  leaseId      String   @map("lease_id")
+  amountCents  Int      @map("amount_cents")
+  dueDate      DateTime @map("due_date")
+  paidAt       DateTime? @map("paid_at")
+  method       String?  // stripe, check, cash, ach
+  stripePaymentId String? @map("stripe_payment_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  lease Lease @relation(fields: [leaseId], references: [id])
+
+  @@map("payments")
+}
+
+// ──────────────────────────────────────
+// Reservations (Short-Term)
+// ──────────────────────────────────────
+
+enum ReservationStatus {
+  INQUIRY
+  CONFIRMED
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+}
+
+model Reservation {
+  id             String            @id @default(cuid())
+  organizationId String            @map("organization_id")
+  propertyId     String            @map("property_id")
+  unitId         String?           @map("unit_id")
+  guestName      String            @map("guest_name")
+  guestEmail     String            @map("guest_email")
+  guestPhone     String?           @map("guest_phone")
+  channel        String?           // airbnb, vrbo, direct, booking
+  externalId     String?           @map("external_id")
+  status         ReservationStatus @default(INQUIRY)
+  checkIn        DateTime          @map("check_in")
+  checkOut       DateTime          @map("check_out")
+  nightlyRateCents Int             @map("nightly_rate_cents")
+  totalCents     Int               @map("total_cents")
+  cleaningFeeCents Int             @default(0) @map("cleaning_fee_cents")
+  notes          String?
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  organization      Organization       @relation(fields: [organizationId], references: [id])
+  property          Property           @relation(fields: [propertyId], references: [id])
+  unit              Unit?              @relation(fields: [unitId], references: [id])
+  cleaningSchedules CleaningSchedule[]
+
+  @@map("reservations")
+}
+
+model CleaningSchedule {
+  id            String   @id @default(cuid())
+  reservationId String   @map("reservation_id")
+  unitId        String   @map("unit_id")
+  assigneeId    String?  @map("assignee_id")
+  scheduledDate DateTime @map("scheduled_date")
+  completedAt   DateTime? @map("completed_at")
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  reservation Reservation @relation(fields: [reservationId], references: [id])
+  unit        Unit        @relation(fields: [unitId], references: [id])
+  assignee    User?       @relation("CleaningAssignee", fields: [assigneeId], references: [id])
+
+  @@map("cleaning_schedules")
+}
+
+// ──────────────────────────────────────
+// Maintenance
+// ──────────────────────────────────────
+
+enum JobPriority {
+  LOW
+  MEDIUM
+  HIGH
+  EMERGENCY
+}
+
+enum JobStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_PARTS
+  COMPLETED
+  CANCELLED
+}
+
+model MaintenanceJob {
+  id             String      @id @default(cuid())
+  organizationId String      @map("organization_id")
+  propertyId     String      @map("property_id")
+  unitId         String?     @map("unit_id")
+  createdById    String      @map("created_by_id")
+  assignedToId   String?     @map("assigned_to_id")
+  title          String
+  description    String
+  priority       JobPriority @default(MEDIUM)
+  status         JobStatus   @default(OPEN)
+  category       String?     // plumbing, electrical, hvac, appliance, general
+  estimateCents  Int?        @map("estimate_cents")
+  actualCostCents Int?       @map("actual_cost_cents")
+  scheduledDate  DateTime?   @map("scheduled_date")
+  completedAt    DateTime?   @map("completed_at")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  property     Property     @relation(fields: [propertyId], references: [id])
+  unit         Unit?        @relation(fields: [unitId], references: [id])
+  createdBy    User         @relation("CreatedBy", fields: [createdById], references: [id])
+  assignedTo   User?        @relation("AssignedTech", fields: [assignedToId], references: [id])
+  messages     Message[]
+
+  @@map("maintenance_jobs")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  jobId     String   @map("job_id")
+  senderId  String   @map("sender_id")
+  body      String
+  imageUrl  String?  @map("image_url")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  job    MaintenanceJob @relation(fields: [jobId], references: [id])
+  sender User           @relation(fields: [senderId], references: [id])
+
+  @@map("messages")
+}
+
+// ──────────────────────────────────────
+// Renovations / Remodeling
+// ──────────────────────────────────────
+
+enum RenovationStatus {
+  PLANNING
+  IN_PROGRESS
+  COMPLETED
+  ON_HOLD
+}
+
+model Renovation {
+  id             String           @id @default(cuid())
+  propertyId     String           @map("property_id")
+  name           String
+  status         RenovationStatus @default(PLANNING)
+  budgetCents    Int              @map("budget_cents")
+  actualCostCents Int             @default(0) @map("actual_cost_cents")
+  startDate      DateTime?        @map("start_date")
+  endDate        DateTime?        @map("end_date")
+  notes          String?
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  property Property          @relation(fields: [propertyId], references: [id])
+  expenses RenovationExpense[]
+
+  @@map("renovations")
+}
+
+model RenovationExpense {
+  id           String   @id @default(cuid())
+  renovationId String   @map("renovation_id")
+  vendorId     String?  @map("vendor_id")
+  category     String   // materials, labor, permits, fixtures, appliances
+  description  String
+  amountCents  Int      @map("amount_cents")
+  receiptUrl   String?  @map("receipt_url")
+  date         DateTime
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  renovation Renovation @relation(fields: [renovationId], references: [id])
+  vendor     Vendor?    @relation(fields: [vendorId], references: [id])
+
+  @@map("renovation_expenses")
+}
+
+// ──────────────────────────────────────
+// Financials
+// ──────────────────────────────────────
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+model Transaction {
+  id             String          @id @default(cuid())
+  organizationId String          @map("organization_id")
+  propertyId     String?         @map("property_id")
+  type           TransactionType
+  category       String          // rent, maintenance, utilities, insurance, taxes, mortgage
+  description    String
+  amountCents    Int             @map("amount_cents")
+  date           DateTime
+  receiptUrl     String?         @map("receipt_url")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  property     Property?    @relation(fields: [propertyId], references: [id])
+
+  @@map("transactions")
+}
+
+model Distribution {
+  id           String   @id @default(cuid())
+  investorId   String   @map("investor_id")
+  amountCents  Int      @map("amount_cents")
+  date         DateTime
+  notes        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  investor Investor @relation(fields: [investorId], references: [id])
+
+  @@map("distributions")
+}
+
+// ──────────────────────────────────────
+// Vendors & Contacts
+// ──────────────────────────────────────
+
+model Vendor {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  name           String
+  trade          String?  // plumber, electrician, general contractor, etc.
+  email          String?
+  phone          String?
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization       Organization        @relation(fields: [organizationId], references: [id])
+  renovationExpenses RenovationExpense[]
+
+  @@map("vendors")
+}
+
+model Contact {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  name           String
+  email          String?
+  phone          String?
+  role           String?
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@map("contacts")
+}
+
+// ──────────────────────────────────────
+// Documents & Listings
+// ──────────────────────────────────────
+
+model Document {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  propertyId     String?  @map("property_id")
+  leaseId        String?  @map("lease_id")
+  name           String
+  fileUrl        String   @map("file_url")
+  mimeType       String?  @map("mime_type")
+  sizeBytes      Int?     @map("size_bytes")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  property     Property?    @relation(fields: [propertyId], references: [id])
+  lease        Lease?       @relation(fields: [leaseId], references: [id])
+
+  @@map("documents")
+}
+
+enum ListingStatus {
+  DRAFT
+  ACTIVE
+  UNDER_CONTRACT
+  SOLD
+  WITHDRAWN
+}
+
+model Listing {
+  id            String        @id @default(cuid())
+  propertyId    String        @map("property_id")
+  status        ListingStatus @default(DRAFT)
+  askingPriceCents Int        @map("asking_price_cents")
+  description   String?
+  publishedAt   DateTime?     @map("published_at")
+  soldPriceCents Int?         @map("sold_price_cents")
+  soldAt        DateTime?     @map("sold_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  property Property @relation(fields: [propertyId], references: [id])
+
+  @@map("listings")
+}
+
+// ──────────────────────────────────────
+// Audit Log
+// ──────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  action    String
+  entity    String
+  entityId  String   @map("entity_id")
+  payload   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
