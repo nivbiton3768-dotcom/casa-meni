@@ -11,6 +11,7 @@ import {
   Clock,
   CheckCircle2,
   ArrowRight,
+  PenLine,
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -74,8 +75,17 @@ const statusColors: Record<string, string> = {
   WAITING_PARTS: 'bg-orange-100 text-orange-700',
 };
 
+interface PendingSignature {
+  id: string;
+  signingToken: string;
+  envelope: { id: string; title: string; expiresAt: string | null };
+}
+
 export default function TenantDashboard() {
   const { data, loading } = useApi<Dashboard>('/tenant-portal/dashboard');
+  const { data: pendingSignatures } = useApi<PendingSignature[]>(
+    '/signing/envelopes/pending-for-me',
+  );
 
   if (loading) {
     return (
@@ -117,6 +127,40 @@ export default function TenantDashboard() {
         title="My Home"
         description={`${data.lease.property.name} — Unit ${data.lease.unit.unitNumber}`}
       />
+
+      {pendingSignatures && pendingSignatures.length > 0 && (
+        <Card className="border-blue-200 bg-blue-50/50">
+          <CardContent className="p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="rounded-lg bg-blue-100 p-2">
+                  <PenLine className="h-5 w-5 text-blue-700" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-blue-900">
+                    {pendingSignatures.length} document
+                    {pendingSignatures.length === 1 ? '' : 's'} waiting for your signature
+                  </p>
+                  <p className="mt-0.5 text-xs text-blue-700">
+                    {pendingSignatures
+                      .slice(0, 2)
+                      .map((s) => s.envelope.title)
+                      .join(', ')}
+                    {pendingSignatures.length > 2 && ` and ${pendingSignatures.length - 2} more`}
+                  </p>
+                </div>
+              </div>
+              <Link
+                href={`/sign/${pendingSignatures[0].signingToken}`}
+                className="inline-flex shrink-0 items-center justify-center rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              >
+                Review &amp; Sign
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

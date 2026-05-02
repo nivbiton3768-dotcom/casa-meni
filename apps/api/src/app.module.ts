@@ -18,6 +18,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { TenantPortalModule } from './tenant-portal/tenant-portal.module';
 import { SearchModule } from './search/search.module';
 import { UploadsModule } from './uploads/uploads.module';
+import { SigningModule } from './signing/signing.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { UploadsModule } from './uploads/uploads.module';
     TenantPortalModule,
     SearchModule,
     UploadsModule,
+    SigningModule,
   ],
 })
 export class AppModule {}

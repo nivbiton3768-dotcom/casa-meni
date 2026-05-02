@@ -18,6 +18,7 @@ import {
   PieChart,
   BarChart3,
   Bell,
+  PenLine,
 } from 'lucide-react';
 
 const navigation = [
@@ -33,6 +34,7 @@ const navigation = [
   { name: 'Notifications', href: '/notifications', icon: Bell },
   { name: 'Vendors', href: '/vendors', icon: HardHat },
   { name: 'Documents', href: '/documents', icon: FileText },
+  { name: 'E-Signatures', href: '/signing', icon: PenLine },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 

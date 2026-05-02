@@ -31,6 +31,7 @@ model Organization {
   reservations    Reservation[]
   notifications   Notification[]
   uploads         Upload[]
+  signingEnvelopes SigningEnvelope[]
 
   @@map("organizations")
 }
@@ -543,6 +544,8 @@ enum NotificationType {
   MAINTENANCE_UPDATE
   RENOVATION_BUDGET
   RESERVATION_UPCOMING
+  SIGNATURE_REQUEST
+  SIGNATURE_COMPLETED
   GENERAL
 }
 
@@ -586,6 +589,76 @@ model Upload {
 
   @@index([entityType, entityId])
   @@map("uploads")
+}
+
+// ──────────────────────────────────────
+// E-Signatures
+// ──────────────────────────────────────
+
+enum EnvelopeStatus {
+  DRAFT
+  SENT
+  COMPLETED
+  DECLINED
+  EXPIRED
+  CANCELLED
+}
+
+enum SignerStatus {
+  PENDING
+  VIEWED
+  SIGNED
+  DECLINED
+}
+
+model SigningEnvelope {
+  id               String         @id @default(cuid())
+  organizationId   String         @map("organization_id")
+  title            String
+  message          String?
+  sourceFileUrl    String         @map("source_file_url")
+  sourceFileName   String         @map("source_file_name")
+  signedFileUrl    String?        @map("signed_file_url")
+  signedFileHash   String?        @map("signed_file_hash")
+  status           EnvelopeStatus @default(DRAFT)
+  leaseId          String?        @map("lease_id")
+  propertyId       String?        @map("property_id")
+  documentId       String?        @map("document_id")
+  createdById      String         @map("created_by_id")
+  sentAt           DateTime?      @map("sent_at")
+  completedAt      DateTime?      @map("completed_at")
+  expiresAt        DateTime?      @map("expires_at")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  organization Organization       @relation(fields: [organizationId], references: [id])
+  signers      SignatureRequest[]
+
+  @@index([organizationId, status])
+  @@index([leaseId])
+  @@map("signing_envelopes")
+}
+
+model SignatureRequest {
+  id               String       @id @default(cuid())
+  envelopeId       String       @map("envelope_id")
+  signerEmail      String       @map("signer_email")
+  signerName       String       @map("signer_name")
+  signerUserId     String?      @map("signer_user_id")
+  signingToken     String       @unique @map("signing_token")
+  status           SignerStatus @default(PENDING)
+  viewedAt         DateTime?    @map("viewed_at")
+  signedAt         DateTime?    @map("signed_at")
+  signatureDataUrl String?      @map("signature_data_url")
+  ipAddress        String?      @map("ip_address")
+  userAgent        String?      @map("user_agent")
+  declineReason    String?      @map("decline_reason")
+  createdAt        DateTime     @default(now()) @map("created_at")
+
+  envelope SigningEnvelope @relation(fields: [envelopeId], references: [id], onDelete: Cascade)
+
+  @@index([envelopeId])
+  @@map("signature_requests")
 }
 
 // ──────────────────────────────────────
