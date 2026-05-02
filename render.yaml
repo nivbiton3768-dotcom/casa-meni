@@ -21,3 +21,12 @@ services:
       #   value: re_your_key_here
       # - key: EMAIL_FROM
       #   value: "Casa Meni <noreply@yourdomain.com>"
+      # Optional: enable online rent payments via Stripe.
+      # Test keys: https://dashboard.stripe.com/test/apikeys
+      # Webhook secret: https://dashboard.stripe.com/test/webhooks (point to /api/v1/webhooks/stripe)
+      # - key: STRIPE_SECRET_KEY
+      #   value: sk_test_...
+      # - key: STRIPE_WEBHOOK_SECRET
+      #   value: whsec_...
+      # - key: STRIPE_PUBLISHABLE_KEY
+      #   value: pk_test_...

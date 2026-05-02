@@ -1,9 +1,19 @@
 'use client';
 
+import { useState } from 'react';
 import { useApi } from '@/hooks/use-api';
+import { apiFetch } from '@/lib/utils';
+import { useToast } from '@/components/ui/toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { DollarSign, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import {
+  DollarSign,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
+  CreditCard,
+  Loader2,
+} from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 
 interface Payment {
@@ -12,13 +22,71 @@ interface Payment {
   dueDate: string;
   paidAt: string | null;
   method: string | null;
+  status?: string;
+  stripeReceiptUrl?: string | null;
+}
+
+interface PaymentSettings {
+  enabled: boolean;
+  publishableKey: string | null;
 }
 
 const fmt = (cents: number) =>
   `$${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
+function PayButton({
+  payment,
+  onSuccess,
+}: {
+  payment: Payment;
+  onSuccess: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const toast = useToast();
+
+  const handleClick = async () => {
+    setLoading(true);
+    try {
+      const res = await apiFetch<{ url: string }>(
+        `/payments/${payment.id}/checkout`,
+        { method: 'POST' },
+      );
+      window.location.href = res.url;
+      onSuccess();
+    } catch (err) {
+      toast.error(
+        'Could not start payment',
+        err instanceof Error ? err.message : 'Try again',
+      );
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={loading}
+      className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+    >
+      {loading ? (
+        <>
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Loading...
+        </>
+      ) : (
+        <>
+          <CreditCard className="h-4 w-4" />
+          Pay {fmt(payment.amountCents)}
+        </>
+      )}
+    </button>
+  );
+}
+
 export default function TenantPaymentsPage() {
-  const { data: payments, loading } = useApi<Payment[]>('/tenant-portal/payments');
+  const { data: payments, loading, refetch } =
+    useApi<Payment[]>('/tenant-portal/payments');
+  const { data: settings } = useApi<PaymentSettings>('/payments/settings');
 
   if (loading) {
     return (
@@ -43,12 +111,23 @@ export default function TenantPaymentsPage() {
   const totalOverdue = overdue.reduce((s, p) => s + p.amountCents, 0);
   const totalUpcoming = upcoming.reduce((s, p) => s + p.amountCents, 0);
 
+  const onlinePaymentsEnabled = settings?.enabled ?? false;
+
   return (
     <div className="space-y-6 pb-6">
       <PageHeader
         title="Payment History"
         description="Track your rent payments and upcoming due dates"
       />
+
+      {!onlinePaymentsEnabled && (overdue.length > 0 || upcoming.length > 0) && (
+        <Card className="border-blue-100 bg-blue-50/40">
+          <CardContent className="p-4 text-sm text-blue-900">
+            Online payments aren&apos;t set up yet. Please contact your property
+            manager for payment options.
+          </CardContent>
+        </Card>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
@@ -106,7 +185,10 @@ export default function TenantPaymentsPage() {
           <CardContent>
             <div className="space-y-2">
               {overdue.map((p) => (
-                <div key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-red-100 bg-red-50/50 p-4">
+                <div
+                  key={p.id}
+                  className="flex flex-col gap-3 rounded-lg border border-red-100 bg-red-50/50 p-4 sm:flex-row sm:items-center sm:justify-between"
+                >
                   <div className="min-w-0">
                     <p className="font-semibold text-red-700">{fmt(p.amountCents)}</p>
                     <p className="text-sm text-red-500">
@@ -114,9 +196,14 @@ export default function TenantPaymentsPage() {
                       {Math.ceil((now.getTime() - new Date(p.dueDate).getTime()) / 86400000)} days overdue
                     </p>
                   </div>
-                  <span className="shrink-0 whitespace-nowrap rounded bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
-                    OVERDUE
-                  </span>
+                  <div className="flex items-center justify-between gap-2 sm:justify-end">
+                    <span className="shrink-0 whitespace-nowrap rounded bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
+                      OVERDUE
+                    </span>
+                    {onlinePaymentsEnabled && (
+                      <PayButton payment={p} onSuccess={refetch} />
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -140,21 +227,29 @@ export default function TenantPaymentsPage() {
                   (new Date(p.dueDate).getTime() - now.getTime()) / 86400000,
                 );
                 return (
-                  <div key={p.id} className="flex items-center justify-between gap-3 rounded-lg border p-4">
+                  <div
+                    key={p.id}
+                    className="flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
                     <div className="min-w-0">
                       <p className="font-semibold text-gray-900">{fmt(p.amountCents)}</p>
                       <p className="text-sm text-gray-500">
                         Due {new Date(p.dueDate).toLocaleDateString()}
                       </p>
                     </div>
-                    <span
-                      className={cn(
-                        'shrink-0 whitespace-nowrap rounded px-2.5 py-1 text-xs font-medium',
-                        daysUntil <= 7 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600',
+                    <div className="flex items-center justify-between gap-2 sm:justify-end">
+                      <span
+                        className={cn(
+                          'shrink-0 whitespace-nowrap rounded px-2.5 py-1 text-xs font-medium',
+                          daysUntil <= 7 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600',
+                        )}
+                      >
+                        {daysUntil <= 0 ? 'Today' : `${daysUntil} days`}
+                      </span>
+                      {onlinePaymentsEnabled && daysUntil <= 14 && (
+                        <PayButton payment={p} onSuccess={refetch} />
                       )}
-                    >
-                      {daysUntil <= 0 ? 'Today' : `${daysUntil} days`}
-                    </span>
+                    </div>
                   </div>
                 );
               })}
@@ -189,6 +284,16 @@ export default function TenantPaymentsPage() {
                       Paid {p.paidAt ? new Date(p.paidAt).toLocaleDateString() : '—'}
                       {p.method ? ` · ${p.method}` : ''}
                     </p>
+                    {p.stripeReceiptUrl && (
+                      <a
+                        href={p.stripeReceiptUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-0.5 text-xs font-medium text-blue-600 hover:underline"
+                      >
+                        View receipt
+                      </a>
+                    )}
                   </div>
                   <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
                     <CheckCircle2 className="h-3 w-3" />
@@ -207,6 +312,7 @@ export default function TenantPaymentsPage() {
                     <th className="pb-2 font-medium">Paid On</th>
                     <th className="pb-2 font-medium">Method</th>
                     <th className="pb-2 font-medium">Status</th>
+                    <th className="pb-2 font-medium">Receipt</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -225,6 +331,20 @@ export default function TenantPaymentsPage() {
                           <CheckCircle2 className="h-3 w-3" />
                           Paid
                         </span>
+                      </td>
+                      <td className="py-3">
+                        {p.stripeReceiptUrl ? (
+                          <a
+                            href={p.stripeReceiptUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-blue-600 hover:underline"
+                          >
+                            View
+                          </a>
+                        ) : (
+                          <span className="text-gray-400">—</span>
+                        )}
                       </td>
                     </tr>
                   ))}

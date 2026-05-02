@@ -20,11 +20,14 @@ import { SearchModule } from './search/search.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { SigningModule } from './signing/signing.module';
 import { EmailModule } from './email/email.module';
+import { StripeModule } from './stripe/stripe.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     EmailModule,
+    StripeModule,
     PrismaModule,
     AuthModule,
     PropertiesModule,
@@ -44,6 +47,7 @@ import { EmailModule } from './email/email.module';
     SearchModule,
     UploadsModule,
     SigningModule,
+    PaymentsModule,
   ],
 })
 export class AppModule {}
