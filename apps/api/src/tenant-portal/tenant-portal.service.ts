@@ -149,7 +149,7 @@ export class TenantPortalService {
         createdById: userId,
         title: dto.title,
         description: dto.description,
-        priority: (dto.priority as 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT') || 'MEDIUM',
+        priority: (dto.priority as 'LOW' | 'MEDIUM' | 'HIGH' | 'EMERGENCY') || 'MEDIUM',
         category: dto.category || 'GENERAL',
       },
       include: { property: true, unit: true },
