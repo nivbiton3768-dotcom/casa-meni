@@ -1,8 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { useApi } from '@/hooks/use-api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Modal } from '@/components/ui/modal';
+import { AddDocumentForm } from '@/components/forms/add-document-form';
 import {
   FileText,
   Plus,
@@ -30,7 +33,8 @@ function formatBytes(bytes: number | null) {
 }
 
 export default function DocumentsPage() {
-  const { data: docs, loading } = useApi<Doc[]>('/documents');
+  const { data: docs, loading, refetch } = useApi<Doc[]>('/documents');
+  const [showAdd, setShowAdd] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -41,7 +45,7 @@ export default function DocumentsPage() {
             {docs ? `${docs.length} documents` : 'Loading...'}
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setShowAdd(true)}>
           <Upload className="mr-2 h-4 w-4" />
           Upload Document
         </Button>
@@ -116,6 +120,16 @@ export default function DocumentsPage() {
           </CardContent>
         </Card>
       )}
+
+      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="Add Document" size="md">
+        <AddDocumentForm
+          onSuccess={() => {
+            setShowAdd(false);
+            refetch();
+          }}
+          onCancel={() => setShowAdd(false)}
+        />
+      </Modal>
     </div>
   );
 }

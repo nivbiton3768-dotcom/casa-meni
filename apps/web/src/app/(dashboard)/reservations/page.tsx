@@ -1,8 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { useApi } from '@/hooks/use-api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Modal } from '@/components/ui/modal';
+import { AddReservationForm } from '@/components/forms/add-reservation-form';
 import { formatCents, cn } from '@/lib/utils';
 import {
   CalendarDays,
@@ -50,8 +53,9 @@ const channelColors: Record<string, string> = {
 };
 
 export default function ReservationsPage() {
-  const { data: reservations, loading } =
+  const { data: reservations, loading, refetch } =
     useApi<Reservation[]>('/reservations');
+  const [showAdd, setShowAdd] = useState(false);
 
   const nights = (checkIn: string, checkOut: string) => {
     const diff = new Date(checkOut).getTime() - new Date(checkIn).getTime();
@@ -69,7 +73,7 @@ export default function ReservationsPage() {
               : 'Loading...'}
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setShowAdd(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add Reservation
         </Button>
@@ -201,6 +205,16 @@ export default function ReservationsPage() {
           })}
         </div>
       )}
+
+      <Modal open={showAdd} onClose={() => setShowAdd(false)} title="New Reservation" size="lg">
+        <AddReservationForm
+          onSuccess={() => {
+            setShowAdd(false);
+            refetch();
+          }}
+          onCancel={() => setShowAdd(false)}
+        />
+      </Modal>
     </div>
   );
 }

@@ -30,6 +30,7 @@ model Organization {
   investors       Investor[]
   reservations    Reservation[]
   notifications   Notification[]
+  uploads         Upload[]
 
   @@map("organizations")
 }
@@ -71,6 +72,7 @@ model User {
   cleaningSchedules CleaningSchedule[]  @relation("CleaningAssignee")
   auditLogs         AuditLog[]
   notifications     Notification[]
+  uploads           Upload[]
 
   @@unique([organizationId, email])
   @@map("users")
@@ -561,6 +563,29 @@ model Notification {
   @@index([organizationId, isRead])
   @@index([userId, isRead])
   @@map("notifications")
+}
+
+// ──────────────────────────────────────
+// Uploads
+// ──────────────────────────────────────
+
+model Upload {
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  filename       String
+  storageKey     String   @unique @map("storage_key")
+  mimeType       String   @map("mime_type")
+  sizeBytes      Int      @map("size_bytes")
+  uploadedById   String   @map("uploaded_by_id")
+  entityType     String   @map("entity_type")
+  entityId       String   @map("entity_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  uploadedBy   User         @relation(fields: [uploadedById], references: [id])
+
+  @@index([entityType, entityId])
+  @@map("uploads")
 }
 
 // ──────────────────────────────────────
