@@ -7,6 +7,14 @@ import { apiFetch, cn } from '@/lib/utils';
 import { Bell, Search, X, CheckCheck } from 'lucide-react';
 import Link from 'next/link';
 
+interface SearchResult {
+  type: 'property' | 'unit' | 'tenant' | 'vendor' | 'maintenance';
+  id: string;
+  title: string;
+  subtitle: string;
+  url: string;
+}
+
 interface Notification {
   id: string;
   type: string;
@@ -16,6 +24,22 @@ interface Notification {
   isRead: boolean;
   createdAt: string;
 }
+
+const searchTypeLabels: Record<string, string> = {
+  property: 'Properties',
+  unit: 'Units',
+  tenant: 'Tenants',
+  vendor: 'Vendors',
+  maintenance: 'Maintenance',
+};
+
+const searchTypeColors: Record<string, string> = {
+  property: 'bg-emerald-100 text-emerald-700',
+  unit: 'bg-sky-100 text-sky-700',
+  tenant: 'bg-violet-100 text-violet-700',
+  vendor: 'bg-orange-100 text-orange-700',
+  maintenance: 'bg-rose-100 text-rose-700',
+};
 
 const typeColors: Record<string, string> = {
   PAYMENT_OVERDUE: 'bg-red-100 text-red-700',
@@ -57,6 +81,57 @@ export function Header() {
 
   const unreadCount = unreadData?.unreadCount || 0;
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (searchQuery.length < 2) {
+      setSearchResults([]);
+      setSearchOpen(false);
+      return;
+    }
+    setSearchLoading(true);
+    setSearchOpen(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await apiFetch<SearchResult[]>(
+          '/search?q=' + encodeURIComponent(searchQuery),
+        );
+        setSearchResults(res);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSearchOpen(false);
+      }
+    };
+    if (searchOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [searchOpen]);
+
+  const grouped = searchResults.reduce<Record<string, SearchResult[]>>(
+    (acc, r) => {
+      (acc[r.type] ??= []).push(r);
+      return acc;
+    },
+    {},
+  );
+
   useEffect(() => {
     const interval = setInterval(() => refetchCount(), 30000);
     return () => clearInterval(interval);
@@ -96,13 +171,53 @@ export function Header() {
   return (
     <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6">
       <div className="flex items-center gap-4">
-        <div className="relative">
+        <div className="relative" ref={searchRef}>
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Search properties, tenants, jobs..."
             className="h-9 w-80 rounded-lg border border-gray-300 bg-gray-50 pl-9 pr-4 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => { if (searchResults.length > 0) setSearchOpen(true); }}
+            onKeyDown={(e) => { if (e.key === 'Escape') setSearchOpen(false); }}
           />
+
+          {searchOpen && (
+            <div className="absolute left-0 top-full mt-2 w-96 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl z-50">
+              {searchLoading ? (
+                <div className="py-6 text-center text-sm text-gray-500">Searching...</div>
+              ) : searchResults.length === 0 ? (
+                <div className="py-6 text-center text-sm text-gray-500">No results</div>
+              ) : (
+                <div className="max-h-96 overflow-y-auto">
+                  {Object.entries(grouped).map(([type, items]) => (
+                    <div key={type}>
+                      <div className="sticky top-0 bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        {searchTypeLabels[type] || type}
+                      </div>
+                      {items.map((result) => (
+                        <Link
+                          key={result.id}
+                          href={result.url}
+                          onClick={() => { setSearchOpen(false); setSearchQuery(''); }}
+                          className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-gray-50"
+                        >
+                          <span className={cn('shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium', searchTypeColors[result.type])}>
+                            {searchTypeLabels[result.type]?.slice(0, -1) || result.type}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-gray-900">{result.title}</p>
+                            <p className="truncate text-xs text-gray-500">{result.subtitle}</p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

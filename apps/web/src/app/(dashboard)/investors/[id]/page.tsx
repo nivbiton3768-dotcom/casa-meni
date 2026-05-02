@@ -67,6 +67,21 @@ interface InvestorPnl {
   totalDistributedCents: number;
 }
 
+interface InvestorMetrics {
+  investorName: string;
+  ownershipPct: number;
+  investedCents: number;
+  currentValueCents: number;
+  totalDistributedCents: number;
+  annualCashFlowCents: number;
+  totalReturnCents: number;
+  cashOnCashPct: number;
+  equityMultiple: number;
+  irrPct: number;
+  holdingYears: number;
+  propertyCount: number;
+}
+
 export default function InvestorDetailPage({
   params,
 }: {
@@ -75,6 +90,7 @@ export default function InvestorDetailPage({
   const { id } = use(params);
   const { data: investor, loading, refetch } = useApi<InvestorDetail>(`/investors/${id}`);
   const { data: pnl } = useApi<InvestorPnl>(`/investors/${id}/pnl`);
+  const { data: metrics } = useApi<InvestorMetrics>(`/investors/${id}/metrics`);
   const [showDist, setShowDist] = useState(false);
 
   if (loading) {
@@ -188,6 +204,53 @@ export default function InvestorDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      {/* Investment Metrics */}
+      {metrics && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <TrendingUp className="h-4 w-4" />
+              Investment Performance
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+              <div className="rounded-lg bg-blue-50 p-3">
+                <p className="text-xs text-blue-600">Total Invested</p>
+                <p className="text-lg font-bold text-blue-700">{formatCents(metrics.investedCents)}</p>
+              </div>
+              <div className="rounded-lg bg-emerald-50 p-3">
+                <p className="text-xs text-emerald-600">Current Value</p>
+                <p className="text-lg font-bold text-emerald-700">{formatCents(metrics.currentValueCents)}</p>
+              </div>
+              <div className="rounded-lg bg-purple-50 p-3">
+                <p className="text-xs text-purple-600">Annual Cash Flow</p>
+                <p className={cn('text-lg font-bold', metrics.annualCashFlowCents >= 0 ? 'text-purple-700' : 'text-red-600')}>
+                  {formatCents(metrics.annualCashFlowCents)}
+                </p>
+              </div>
+              <div className={cn('rounded-lg p-3', metrics.cashOnCashPct >= 0 ? 'bg-green-50' : 'bg-red-50')}>
+                <p className="text-xs text-gray-600">Cash-on-Cash</p>
+                <p className={cn('text-lg font-bold', metrics.cashOnCashPct >= 0 ? 'text-green-700' : 'text-red-600')}>
+                  {metrics.cashOnCashPct.toFixed(1)}%
+                </p>
+              </div>
+              <div className="rounded-lg bg-amber-50 p-3">
+                <p className="text-xs text-amber-600">Equity Multiple</p>
+                <p className="text-lg font-bold text-amber-700">{metrics.equityMultiple.toFixed(2)}x</p>
+              </div>
+              <div className={cn('rounded-lg p-3', metrics.irrPct >= 0 ? 'bg-indigo-50' : 'bg-red-50')}>
+                <p className="text-xs text-gray-600">IRR</p>
+                <p className={cn('text-lg font-bold', metrics.irrPct >= 0 ? 'text-indigo-700' : 'text-red-600')}>
+                  {metrics.irrPct.toFixed(1)}%
+                </p>
+                <p className="text-[10px] text-gray-400">{metrics.holdingYears}yr hold</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-3 gap-6">
         {/* P&L by Property */}

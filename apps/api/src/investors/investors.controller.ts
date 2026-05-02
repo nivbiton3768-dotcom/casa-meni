@@ -47,6 +47,15 @@ export class InvestorsController {
     return this.service.findOne(orgId, id);
   }
 
+  @Get(':id/metrics')
+  @Roles(Role.OWNER, Role.ACCOUNTANT, Role.INVESTOR)
+  getInvestorMetrics(
+    @CurrentUser('organizationId') orgId: string,
+    @Param('id') id: string,
+  ) {
+    return this.service.getInvestorMetrics(orgId, id);
+  }
+
   @Get(':id/pnl')
   @Roles(Role.OWNER, Role.ACCOUNTANT, Role.INVESTOR)
   getInvestorPnl(

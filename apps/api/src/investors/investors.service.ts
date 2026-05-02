@@ -135,6 +135,90 @@ export class InvestorsService {
     };
   }
 
+  async getInvestorMetrics(organizationId: string, investorId: string) {
+    const investor = await this.prisma.investor.findFirst({
+      where: { id: investorId, organizationId },
+      include: {
+        entity: { include: { properties: true } },
+        distributions: { orderBy: { date: 'asc' } },
+      },
+    });
+    if (!investor) throw new NotFoundException('Investor not found');
+
+    const propertyIds = investor.entity?.properties.map((p) => p.id) || [];
+    const ownershipFraction = Number(investor.ownershipPct) / 100;
+
+    const totalPropertyValue = investor.entity?.properties.reduce(
+      (s, p) => s + (p.currentValue || 0), 0,
+    ) || 0;
+    const totalPurchasePrice = investor.entity?.properties.reduce(
+      (s, p) => s + (p.purchasePrice || 0), 0,
+    ) || 0;
+
+    const investorEquity = Math.round(totalPurchasePrice * ownershipFraction);
+    const currentEquityValue = Math.round(totalPropertyValue * ownershipFraction);
+
+    const totalDistributed = investor.distributions.reduce(
+      (s, d) => s + d.amountCents, 0,
+    );
+
+    let annualNetIncome = 0;
+    if (propertyIds.length > 0) {
+      const now = new Date();
+      const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+      const [income12m, expenses12m] = await Promise.all([
+        this.prisma.transaction.aggregate({
+          where: { organizationId, propertyId: { in: propertyIds }, type: 'INCOME', date: { gte: oneYearAgo } },
+          _sum: { amountCents: true },
+        }),
+        this.prisma.transaction.aggregate({
+          where: { organizationId, propertyId: { in: propertyIds }, type: 'EXPENSE', date: { gte: oneYearAgo } },
+          _sum: { amountCents: true },
+        }),
+      ]);
+      annualNetIncome = (income12m._sum.amountCents || 0) - (expenses12m._sum.amountCents || 0);
+    }
+
+    const investorAnnualShare = Math.round(annualNetIncome * ownershipFraction);
+
+    // Cash-on-Cash Return = Annual Cash Flow / Total Cash Invested
+    const cashOnCash = investorEquity > 0
+      ? ((investorAnnualShare / investorEquity) * 100)
+      : 0;
+
+    // Equity Multiple = (Total Distributions + Current Equity) / Cash Invested
+    const equityMultiple = investorEquity > 0
+      ? ((totalDistributed + currentEquityValue) / investorEquity)
+      : 0;
+
+    // Simplified IRR approximation based on holding period
+    const firstPurchase = investor.entity?.properties
+      .filter((p) => p.purchaseDate)
+      .sort((a, b) => new Date(a.purchaseDate!).getTime() - new Date(b.purchaseDate!).getTime())[0];
+    const holdingYears = firstPurchase?.purchaseDate
+      ? (Date.now() - new Date(firstPurchase.purchaseDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000)
+      : 1;
+    const totalReturn = totalDistributed + currentEquityValue - investorEquity;
+    const irr = investorEquity > 0 && holdingYears > 0
+      ? ((Math.pow((totalDistributed + currentEquityValue) / investorEquity, 1 / holdingYears) - 1) * 100)
+      : 0;
+
+    return {
+      investorName: investor.name,
+      ownershipPct: Number(investor.ownershipPct),
+      investedCents: investorEquity,
+      currentValueCents: currentEquityValue,
+      totalDistributedCents: totalDistributed,
+      annualCashFlowCents: investorAnnualShare,
+      totalReturnCents: totalReturn,
+      cashOnCashPct: Math.round(cashOnCash * 100) / 100,
+      equityMultiple: Math.round(equityMultiple * 100) / 100,
+      irrPct: Math.round(irr * 100) / 100,
+      holdingYears: Math.round(holdingYears * 10) / 10,
+      propertyCount: propertyIds.length,
+    };
+  }
+
   async getInvestorPnl(organizationId: string, investorId: string) {
     const investor = await this.prisma.investor.findFirst({
       where: { id: investorId, organizationId },
