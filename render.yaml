@@ -16,3 +16,8 @@ services:
         value: https://web-chi-six-85.vercel.app
       - key: NODE_ENV
         value: production
+      # Optional: enable email delivery. Sign up at https://resend.com (free tier 3k/mo).
+      # - key: RESEND_API_KEY
+      #   value: re_your_key_here
+      # - key: EMAIL_FROM
+      #   value: "Casa Meni <noreply@yourdomain.com>"

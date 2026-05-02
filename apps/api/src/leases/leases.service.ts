@@ -1,15 +1,32 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
 import { CreateLeaseDto } from './dto/create-lease.dto';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 
 @Injectable()
 export class LeasesService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(LeasesService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly email: EmailService,
+    private readonly config: ConfigService,
+  ) {}
+
+  private getFrontendUrl(): string {
+    const url =
+      this.config.get<string>('FRONTEND_URL')?.split(',')[0]?.trim() ||
+      'http://localhost:3000';
+    return url.replace(/\/$/, '');
+  }
 
   async create(organizationId: string, dto: CreateLeaseDto) {
     const unit = await this.prisma.unit.findUnique({
@@ -22,6 +39,10 @@ export class LeasesService {
     }
 
     let tenantId = dto.tenantId;
+    let newTenantWelcomeData: {
+      email: string;
+      tempPassword: string;
+    } | null = null;
 
     if (!tenantId) {
       if (!dto.tenantName || !dto.tenantEmail) {
@@ -40,17 +61,19 @@ export class LeasesService {
       if (existing) {
         tenantId = existing.id;
       } else {
-        const tempPassword = await bcrypt.hash('changeme123', 12);
+        const tempPassword = randomBytes(6).toString('base64url');
+        const passwordHash = await bcrypt.hash(tempPassword, 12);
         const newTenant = await this.prisma.user.create({
           data: {
             organizationId,
             email: dto.tenantEmail.toLowerCase(),
-            passwordHash: tempPassword,
+            passwordHash,
             name: dto.tenantName,
             role: 'TENANT',
           },
         });
         tenantId = newTenant.id;
+        newTenantWelcomeData = { email: newTenant.email, tempPassword };
       }
     }
 
@@ -91,6 +114,27 @@ export class LeasesService {
 
     if (payments.length > 0) {
       await this.prisma.payment.createMany({ data: payments });
+    }
+
+    if (newTenantWelcomeData) {
+      const org = await this.prisma.organization.findUnique({
+        where: { id: organizationId },
+        select: { name: true },
+      });
+      const portalUrl = `${this.getFrontendUrl()}/login`;
+      this.email
+        .sendTenantWelcome(newTenantWelcomeData.email, {
+          tenantName: lease.tenant.name,
+          organizationName: org?.name ?? 'Casa Meni',
+          propertyName: lease.unit.property.name,
+          unitNumber: lease.unit.unitNumber,
+          email: newTenantWelcomeData.email,
+          tempPassword: newTenantWelcomeData.tempPassword,
+          portalUrl,
+        })
+        .catch((err) =>
+          this.logger.error(`Failed to send tenant welcome email: ${err}`),
+        );
     }
 
     return {

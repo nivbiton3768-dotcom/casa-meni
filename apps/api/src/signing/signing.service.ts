@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { EmailService } from '../email/email.service';
 import { ConfigService } from '@nestjs/config';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { randomBytes, createHash } from 'crypto';
@@ -35,6 +36,7 @@ export class SigningService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
+    private readonly email: EmailService,
     private readonly config: ConfigService,
   ) {
     this.bucket = this.config.get('S3_BUCKET') || 'casa-meni-uploads';
@@ -92,8 +94,13 @@ export class SigningService {
           })),
         },
       },
-      include: { signers: true },
+      include: {
+        signers: true,
+        organization: { select: { name: true } },
+      },
     });
+
+    const frontendUrl = this.getFrontendUrl();
 
     for (const signer of envelope.signers) {
       await this.prisma.notification.create({
@@ -103,12 +110,31 @@ export class SigningService {
           type: NotificationType.SIGNATURE_REQUEST,
           title: `Signature requested: ${envelope.title}`,
           message: `${dto.message ?? 'Please review and sign the document.'} Open from your dashboard or use the signing link.`,
-          linkUrl: signer.signerUserId ? `/portal/sign` : null,
+          linkUrl: signer.signerUserId ? `/sign/${signer.signingToken}` : null,
         },
       });
+
+      const signingUrl = `${frontendUrl}/sign/${signer.signingToken}`;
+      this.email
+        .sendSigningRequest(signer.signerEmail, {
+          signerName: signer.signerName,
+          envelopeTitle: envelope.title,
+          organizationName: envelope.organization.name,
+          message: envelope.message,
+          signingUrl,
+          expiresAt: envelope.expiresAt,
+        })
+        .catch((err) => this.logger.error(`Failed to send signing request email: ${err}`));
     }
 
     return envelope;
+  }
+
+  private getFrontendUrl(): string {
+    const url =
+      this.config.get<string>('FRONTEND_URL')?.split(',')[0]?.trim() ||
+      'http://localhost:3000';
+    return url.replace(/\/$/, '');
   }
 
   // ── Admin: list + get ──────────────────────────────────────
@@ -296,6 +322,24 @@ export class SigningService {
             linkUrl: `/signing/${updated!.id}`,
           },
         });
+
+        const sender = await this.prisma.user.findUnique({
+          where: { id: updated!.createdById },
+          select: { email: true, name: true },
+        });
+        if (sender) {
+          const frontendUrl = this.getFrontendUrl();
+          this.email
+            .sendSigningCompleted(sender.email, {
+              recipientName: sender.name,
+              envelopeTitle: updated!.title,
+              signedAt: new Date(),
+              envelopeUrl: `${frontendUrl}/signing/${updated!.id}`,
+            })
+            .catch((err) =>
+              this.logger.error(`Failed to send completion email: ${err}`),
+            );
+        }
       } catch (err) {
         this.logger.error('Failed to stamp PDF', err as Error);
       }
@@ -339,6 +383,25 @@ export class SigningService {
         linkUrl: `/signing/${signer.envelopeId}`,
       },
     });
+
+    const sender = await this.prisma.user.findUnique({
+      where: { id: signer.envelope.createdById },
+      select: { email: true, name: true },
+    });
+    if (sender) {
+      const frontendUrl = this.getFrontendUrl();
+      this.email
+        .sendSigningDeclined(sender.email, {
+          recipientName: sender.name,
+          envelopeTitle: signer.envelope.title,
+          declinedBy: signer.signerName,
+          reason: dto.reason,
+          envelopeUrl: `${frontendUrl}/signing/${signer.envelopeId}`,
+        })
+        .catch((err) =>
+          this.logger.error(`Failed to send decline email: ${err}`),
+        );
+    }
 
     return { ok: true };
   }

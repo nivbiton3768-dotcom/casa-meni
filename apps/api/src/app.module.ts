@@ -19,10 +19,12 @@ import { TenantPortalModule } from './tenant-portal/tenant-portal.module';
 import { SearchModule } from './search/search.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { SigningModule } from './signing/signing.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    EmailModule,
     PrismaModule,
     AuthModule,
     PropertiesModule,
