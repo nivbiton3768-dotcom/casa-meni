@@ -6,13 +6,7 @@ npm install
 cd apps/api
 
 npx prisma generate
-npx tsc -p tsconfig.build.json --noEmit false
-
-# tsc outputs to dist/src/ because prisma.config.ts is at root level
-# symlink so `node dist/main` works
-if [ -f dist/src/main.js ] && [ ! -f dist/main.js ]; then
-  cp -r dist/src/* dist/
-fi
+npx tsc -p tsconfig.build.json
 
 ls dist/main.js
 echo "Build OK"
