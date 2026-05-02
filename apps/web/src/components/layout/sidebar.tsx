@@ -16,6 +16,7 @@ import {
   Hammer,
   HardHat,
   PieChart,
+  BarChart3,
 } from 'lucide-react';
 
 const navigation = [
@@ -27,6 +28,7 @@ const navigation = [
   { name: 'Renovations', href: '/renovations', icon: Hammer },
   { name: 'Transactions', href: '/transactions', icon: DollarSign },
   { name: 'Investors', href: '/investors', icon: PieChart },
+  { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Vendors', href: '/vendors', icon: HardHat },
   { name: 'Documents', href: '/documents', icon: FileText },
   { name: 'Settings', href: '/settings', icon: Settings },

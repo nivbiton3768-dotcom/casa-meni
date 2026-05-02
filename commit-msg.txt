@@ -1,18 +1,13 @@
-feat: add investor module with P&L reporting and entity management
+feat: add reports & analytics dashboard with interactive charts
 
-Investors:
-- CRUD investors with ownership percentages and entity links
-- Per-investor P&L breakdown by property with profit share calc
-- Distribution recording and history tracking
-- Portfolio summary with net income, allocated ownership, total distributed
+5 report endpoints and visualizations:
+- Monthly P&L bar chart (12 months income/expenses/net)
+- Occupancy rates by property with progress bars
+- Rent collection tracking (6 months due vs collected)
+- Renovation budget burn with cumulative line charts
+- Investor returns summary with profit share breakdown table
 
-Entities / LLCs:
-- CRUD legal entities (LLC, S-Corp, Trust, etc.) with EIN
-- Entity-to-property and entity-to-investor relationships
-- Portfolio value aggregation across entity properties
-
-Frontend:
-- Investors page with portfolio stats, investor list, entity sidebar
-- Investor detail with P&L statement, distribution history, entity properties
-- Add Investor, Record Distribution, and Create Entity forms
-- Sidebar updated with Investors navigation (11 nav items, 19 routes)
+Tech: recharts for interactive charts, 5 new API endpoints under
+/reports (monthly-pnl, occupancy, rent-collection, renovation-burn,
+investor-returns). Sidebar updated with Reports navigation.
+20 frontend routes, 50+ API endpoints total.
