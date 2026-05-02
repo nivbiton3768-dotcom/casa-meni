@@ -6,6 +6,7 @@ import { useApi } from '@/hooks/use-api';
 import { apiFetch, cn } from '@/lib/utils';
 import { Bell, Search, X, CheckCheck } from 'lucide-react';
 import Link from 'next/link';
+import { MobileNav } from './mobile-nav';
 
 interface SearchResult {
   type: 'property' | 'unit' | 'tenant' | 'vendor' | 'maintenance';
@@ -81,6 +82,7 @@ export function Header() {
 
   const unreadCount = unreadData?.unreadCount || 0;
 
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -168,180 +170,251 @@ export function Header() {
         .slice(0, 2)
     : '..';
 
-  return (
-    <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6">
-      <div className="flex items-center gap-4">
-        <div className="relative" ref={searchRef}>
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search properties, tenants, jobs..."
-            className="h-9 w-80 rounded-lg border border-gray-300 bg-gray-50 pl-9 pr-4 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => { if (searchResults.length > 0) setSearchOpen(true); }}
-            onKeyDown={(e) => { if (e.key === 'Escape') setSearchOpen(false); }}
-          />
-
-          {searchOpen && (
-            <div className="absolute left-0 top-full mt-2 w-96 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl z-50">
-              {searchLoading ? (
-                <div className="py-6 text-center text-sm text-gray-500">Searching...</div>
-              ) : searchResults.length === 0 ? (
-                <div className="py-6 text-center text-sm text-gray-500">No results</div>
-              ) : (
-                <div className="max-h-96 overflow-y-auto">
-                  {Object.entries(grouped).map(([type, items]) => (
-                    <div key={type}>
-                      <div className="sticky top-0 bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        {searchTypeLabels[type] || type}
-                      </div>
-                      {items.map((result) => (
-                        <Link
-                          key={result.id}
-                          href={result.url}
-                          onClick={() => { setSearchOpen(false); setSearchQuery(''); }}
-                          className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-gray-50"
-                        >
-                          <span className={cn('shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium', searchTypeColors[result.type])}>
-                            {searchTypeLabels[result.type]?.slice(0, -1) || result.type}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-gray-900">{result.title}</p>
-                            <p className="truncate text-xs text-gray-500">{result.subtitle}</p>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="flex items-center gap-4">
-        {/* Notification Bell */}
-        <div className="relative" ref={dropdownRef}>
-          <button
-            onClick={() => { setOpen(!open); if (!open) refetchNotifs(); }}
-            className="relative rounded-lg p-2 text-gray-500 hover:bg-gray-100"
-          >
-            <Bell className="h-5 w-5" />
-            {unreadCount > 0 && (
-              <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </button>
-
-          {open && (
-            <div className="absolute right-0 top-full mt-2 w-96 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl z-50">
-              <div className="flex items-center justify-between border-b px-4 py-3">
-                <h3 className="font-semibold text-gray-900">Notifications</h3>
-                <div className="flex items-center gap-2">
-                  {unreadCount > 0 && (
-                    <button
-                      onClick={handleMarkAllRead}
-                      className="flex items-center gap-1 rounded px-2 py-1 text-xs text-blue-600 hover:bg-blue-50"
-                    >
-                      <CheckCheck className="h-3.5 w-3.5" />
-                      Mark all read
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setOpen(false)}
-                    className="rounded p-1 text-gray-400 hover:bg-gray-100"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
+  const renderSearchResults = () => (
+    <>
+      {searchLoading ? (
+        <div className="py-6 text-center text-sm text-gray-500">Searching...</div>
+      ) : searchResults.length === 0 ? (
+        <div className="py-6 text-center text-sm text-gray-500">No results</div>
+      ) : (
+        <div className="max-h-96 overflow-y-auto">
+          {Object.entries(grouped).map(([type, items]) => (
+            <div key={type}>
+              <div className="sticky top-0 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                {searchTypeLabels[type] || type}
               </div>
-
-              <div className="max-h-96 overflow-y-auto">
-                {!notifications || notifications.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <Bell className="mx-auto h-8 w-8 text-gray-300" />
-                    <p className="mt-2 text-sm text-gray-500">No notifications</p>
-                  </div>
-                ) : (
-                  notifications.slice(0, 10).map((n) => (
-                    <div
-                      key={n.id}
-                      className={cn(
-                        'border-b border-gray-50 px-4 py-3 transition-colors hover:bg-gray-50',
-                        !n.isRead && 'bg-blue-50/40',
-                      )}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={cn(
-                                'rounded px-1.5 py-0.5 text-[10px] font-medium',
-                                typeColors[n.type] || typeColors.GENERAL,
-                              )}
-                            >
-                              {typeLabels[n.type] || 'Info'}
-                            </span>
-                            <span className="text-xs text-gray-400">
-                              {timeAgo(n.createdAt)}
-                            </span>
-                          </div>
-                          {n.linkUrl ? (
-                            <Link
-                              href={n.linkUrl}
-                              onClick={() => { handleMarkRead(n.id); setOpen(false); }}
-                              className="mt-1 block text-sm font-medium text-gray-900 hover:text-blue-600"
-                            >
-                              {n.title}
-                            </Link>
-                          ) : (
-                            <p className="mt-1 text-sm font-medium text-gray-900">{n.title}</p>
-                          )}
-                          <p className="mt-0.5 text-xs text-gray-500 line-clamp-2">{n.message}</p>
-                        </div>
-                        {!n.isRead && (
-                          <button
-                            onClick={() => handleMarkRead(n.id)}
-                            className="mt-1 shrink-0 rounded-full bg-blue-500 h-2 w-2"
-                            title="Mark as read"
-                          />
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              <div className="border-t px-4 py-2">
+              {items.map((result) => (
                 <Link
-                  href="/notifications"
-                  onClick={() => setOpen(false)}
-                  className="block text-center text-sm font-medium text-blue-600 hover:text-blue-700"
+                  key={result.id}
+                  href={result.url}
+                  onClick={() => {
+                    setSearchOpen(false);
+                    setMobileSearchOpen(false);
+                    setSearchQuery('');
+                  }}
+                  className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-gray-50"
                 >
-                  View all notifications
+                  <span
+                    className={cn(
+                      'shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium',
+                      searchTypeColors[result.type],
+                    )}
+                  >
+                    {searchTypeLabels[result.type]?.slice(0, -1) || result.type}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-gray-900">
+                      {result.title}
+                    </p>
+                    <p className="truncate text-xs text-gray-500">{result.subtitle}</p>
+                  </div>
                 </Link>
-              </div>
+              ))}
             </div>
-          )}
+          ))}
+        </div>
+      )}
+    </>
+  );
+
+  return (
+    <>
+      <header className="flex h-16 items-center justify-between gap-2 border-b border-gray-200 bg-white px-4 md:px-6">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <MobileNav />
+
+          <div className="relative hidden md:block" ref={searchRef}>
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search properties, tenants, jobs..."
+              className="h-9 w-72 rounded-lg border border-gray-300 bg-gray-50 pl-9 pr-4 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 lg:w-80"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => {
+                if (searchResults.length > 0) setSearchOpen(true);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') setSearchOpen(false);
+              }}
+            />
+
+            {searchOpen && (
+              <div className="absolute left-0 top-full z-50 mt-2 w-96 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+                {renderSearchResults()}
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={() => setMobileSearchOpen(true)}
+            aria-label="Search"
+            className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 md:hidden"
+          >
+            <Search className="h-5 w-5" />
+          </button>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-medium">
-            {initials}
+        <div className="flex shrink-0 items-center gap-2 md:gap-4">
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => {
+                setOpen(!open);
+                if (!open) refetchNotifs();
+              }}
+              className="relative rounded-lg p-2 text-gray-500 hover:bg-gray-100"
+            >
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {open && (
+              <div className="fixed inset-x-2 top-16 z-50 mt-2 max-w-md overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:w-96">
+                <div className="flex items-center justify-between border-b px-4 py-3">
+                  <h3 className="font-semibold text-gray-900">Notifications</h3>
+                  <div className="flex items-center gap-2">
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={handleMarkAllRead}
+                        className="flex items-center gap-1 rounded px-2 py-1 text-xs text-blue-600 hover:bg-blue-50"
+                      >
+                        <CheckCheck className="h-3.5 w-3.5" />
+                        Mark all read
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setOpen(false)}
+                      className="rounded p-1 text-gray-400 hover:bg-gray-100"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="max-h-96 overflow-y-auto">
+                  {!notifications || notifications.length === 0 ? (
+                    <div className="py-8 text-center">
+                      <Bell className="mx-auto h-8 w-8 text-gray-300" />
+                      <p className="mt-2 text-sm text-gray-500">No notifications</p>
+                    </div>
+                  ) : (
+                    notifications.slice(0, 10).map((n) => (
+                      <div
+                        key={n.id}
+                        className={cn(
+                          'border-b border-gray-50 px-4 py-3 transition-colors hover:bg-gray-50',
+                          !n.isRead && 'bg-blue-50/40',
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={cn(
+                                  'rounded px-1.5 py-0.5 text-[10px] font-medium',
+                                  typeColors[n.type] || typeColors.GENERAL,
+                                )}
+                              >
+                                {typeLabels[n.type] || 'Info'}
+                              </span>
+                              <span className="text-xs text-gray-400">
+                                {timeAgo(n.createdAt)}
+                              </span>
+                            </div>
+                            {n.linkUrl ? (
+                              <Link
+                                href={n.linkUrl}
+                                onClick={() => {
+                                  handleMarkRead(n.id);
+                                  setOpen(false);
+                                }}
+                                className="mt-1 block text-sm font-medium text-gray-900 hover:text-blue-600"
+                              >
+                                {n.title}
+                              </Link>
+                            ) : (
+                              <p className="mt-1 text-sm font-medium text-gray-900">
+                                {n.title}
+                              </p>
+                            )}
+                            <p className="mt-0.5 line-clamp-2 text-xs text-gray-500">
+                              {n.message}
+                            </p>
+                          </div>
+                          {!n.isRead && (
+                            <button
+                              onClick={() => handleMarkRead(n.id)}
+                              className="mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-500"
+                              title="Mark as read"
+                            />
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="border-t px-4 py-2">
+                  <Link
+                    href="/notifications"
+                    onClick={() => setOpen(false)}
+                    className="block text-center text-sm font-medium text-blue-600 hover:text-blue-700"
+                  >
+                    View all notifications
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
-          {user && (
-            <div className="hidden sm:block">
-              <p className="text-sm font-medium text-gray-900">{user.name}</p>
-              <p className="text-xs text-gray-500 capitalize">
-                {user.role.toLowerCase().replace(/_/g, ' ')}
-              </p>
+
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-sm font-medium text-white">
+              {initials}
             </div>
-          )}
+            {user && (
+              <div className="hidden md:block">
+                <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                <p className="text-xs capitalize text-gray-500">
+                  {user.role.toLowerCase().replace(/_/g, ' ')}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {mobileSearchOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-white md:hidden">
+          <div className="flex h-16 items-center gap-2 border-b border-gray-200 px-4">
+            <button
+              onClick={() => {
+                setMobileSearchOpen(false);
+                setSearchQuery('');
+              }}
+              aria-label="Close search"
+              className="rounded-lg p-2 text-gray-500 hover:bg-gray-100"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <input
+                autoFocus
+                type="text"
+                placeholder="Search properties, tenants, jobs..."
+                className="h-10 w-full rounded-lg border border-gray-300 bg-gray-50 pl-9 pr-4 text-sm placeholder:text-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto">{renderSearchResults()}</div>
+        </div>
+      )}
+    </>
   );
 }

@@ -5,6 +5,7 @@ import { useApi } from '@/hooks/use-api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
+import { PageHeader } from '@/components/ui/page-header';
 import { AddWorkOrderForm } from '@/components/forms/add-work-order-form';
 import { cn } from '@/lib/utils';
 import {
@@ -55,18 +56,16 @@ export default function MaintenancePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Maintenance</h1>
-          <p className="text-sm text-gray-500">
-            {jobs ? `${jobs.length} work orders` : 'Loading...'}
-          </p>
-        </div>
-        <Button onClick={() => setShowAdd(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          New Work Order
-        </Button>
-      </div>
+      <PageHeader
+        title="Maintenance"
+        description={jobs ? `${jobs.length} work orders` : 'Loading...'}
+        actions={
+          <Button onClick={() => setShowAdd(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Work Order
+          </Button>
+        }
+      />
 
       <Modal
         open={showAdd}
@@ -123,10 +122,10 @@ export default function MaintenancePage() {
 
             return (
               <Card key={job.id} className="transition-shadow hover:shadow-md">
-                <CardContent className="p-5">
+                <CardContent className="p-4 md:p-5">
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span
                           className={cn(
                             'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
@@ -159,11 +158,13 @@ export default function MaintenancePage() {
                     </div>
                   </div>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                  <div className="mt-3 flex flex-col gap-1.5 text-xs text-gray-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
                     <span className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      {job.property.name}
-                      {job.unit ? ` — Unit ${job.unit.unitNumber}` : ''}
+                      <MapPin className="h-3 w-3 shrink-0" />
+                      <span className="truncate">
+                        {job.property.name}
+                        {job.unit ? ` — Unit ${job.unit.unitNumber}` : ''}
+                      </span>
                     </span>
                     {job.assignedTo && (
                       <span>

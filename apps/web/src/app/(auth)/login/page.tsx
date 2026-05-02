@@ -44,7 +44,7 @@ export default function LoginPage() {
         <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-blue-600">
           <Building2 className="h-6 w-6 text-white" />
         </div>
-        <CardTitle className="text-2xl">Welcome back</CardTitle>
+        <CardTitle className="text-2xl md:text-3xl">Welcome back</CardTitle>
         <p className="text-sm text-gray-500">
           Sign in to your Casa Meni account
         </p>
@@ -52,7 +52,7 @@ export default function LoginPage() {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 break-words">
               {error}
             </div>
           )}
@@ -64,6 +64,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              className="text-base md:text-sm"
             />
           </div>
           <div className="space-y-2">
@@ -76,9 +77,10 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              className="text-base md:text-sm"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full py-2.5" disabled={loading}>
             {loading ? 'Signing in...' : 'Sign in'}
           </Button>
           <p className="text-center text-sm text-gray-500">

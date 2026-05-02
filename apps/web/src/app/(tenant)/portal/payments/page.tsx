@@ -4,6 +4,7 @@ import { useApi } from '@/hooks/use-api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { DollarSign, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface Payment {
   id: string;
@@ -21,7 +22,7 @@ export default function TenantPaymentsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3 pb-6">
         {Array.from({ length: 6 }).map((_, i) => (
           <Card key={i}>
             <CardContent className="p-4">
@@ -43,16 +44,14 @@ export default function TenantPaymentsPage() {
   const totalUpcoming = upcoming.reduce((s, p) => s + p.amountCents, 0);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Payment History</h1>
-        <p className="text-sm text-gray-500">
-          Track your rent payments and upcoming due dates
-        </p>
-      </div>
+    <div className="space-y-6 pb-6">
+      <PageHeader
+        title="Payment History"
+        description="Track your rent payments and upcoming due dates"
+      />
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
         <Card className={cn(overdue.length > 0 && 'border-red-200')}>
           <CardContent className="flex items-center gap-4 p-5">
             <div className={cn('rounded-lg p-2.5', overdue.length > 0 ? 'bg-red-100' : 'bg-gray-50')}>
@@ -107,15 +106,15 @@ export default function TenantPaymentsPage() {
           <CardContent>
             <div className="space-y-2">
               {overdue.map((p) => (
-                <div key={p.id} className="flex items-center justify-between rounded-lg border border-red-100 bg-red-50/50 p-4">
-                  <div>
+                <div key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-red-100 bg-red-50/50 p-4">
+                  <div className="min-w-0">
                     <p className="font-semibold text-red-700">{fmt(p.amountCents)}</p>
                     <p className="text-sm text-red-500">
                       Due {new Date(p.dueDate).toLocaleDateString()} —{' '}
                       {Math.ceil((now.getTime() - new Date(p.dueDate).getTime()) / 86400000)} days overdue
                     </p>
                   </div>
-                  <span className="rounded bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
+                  <span className="shrink-0 whitespace-nowrap rounded bg-red-100 px-2.5 py-1 text-xs font-bold text-red-700">
                     OVERDUE
                   </span>
                 </div>
@@ -141,8 +140,8 @@ export default function TenantPaymentsPage() {
                   (new Date(p.dueDate).getTime() - now.getTime()) / 86400000,
                 );
                 return (
-                  <div key={p.id} className="flex items-center justify-between rounded-lg border p-4">
-                    <div>
+                  <div key={p.id} className="flex items-center justify-between gap-3 rounded-lg border p-4">
+                    <div className="min-w-0">
                       <p className="font-semibold text-gray-900">{fmt(p.amountCents)}</p>
                       <p className="text-sm text-gray-500">
                         Due {new Date(p.dueDate).toLocaleDateString()}
@@ -150,7 +149,7 @@ export default function TenantPaymentsPage() {
                     </div>
                     <span
                       className={cn(
-                        'rounded px-2.5 py-1 text-xs font-medium',
+                        'shrink-0 whitespace-nowrap rounded px-2.5 py-1 text-xs font-medium',
                         daysUntil <= 7 ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600',
                       )}
                     >
@@ -174,7 +173,32 @@ export default function TenantPaymentsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            {/* Mobile: card list */}
+            <div className="space-y-2 md:hidden">
+              {paid.map((p) => (
+                <div
+                  key={p.id}
+                  className="flex items-center justify-between gap-3 rounded-lg border p-3"
+                >
+                  <div className="min-w-0">
+                    <p className="font-medium text-gray-900">{fmt(p.amountCents)}</p>
+                    <p className="text-xs text-gray-500">
+                      Due {new Date(p.dueDate).toLocaleDateString()}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Paid {p.paidAt ? new Date(p.paidAt).toLocaleDateString() : '—'}
+                      {p.method ? ` · ${p.method}` : ''}
+                    </p>
+                  </div>
+                  <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                    <CheckCircle2 className="h-3 w-3" />
+                    Paid
+                  </span>
+                </div>
+              ))}
+            </div>
+            {/* Desktop: table */}
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-left text-gray-500">

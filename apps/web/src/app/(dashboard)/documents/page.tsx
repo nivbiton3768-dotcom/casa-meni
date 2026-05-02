@@ -5,6 +5,7 @@ import { useApi } from '@/hooks/use-api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
+import { PageHeader } from '@/components/ui/page-header';
 import { AddDocumentForm } from '@/components/forms/add-document-form';
 import {
   FileText,
@@ -38,18 +39,16 @@ export default function DocumentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
-          <p className="text-sm text-gray-500">
-            {docs ? `${docs.length} documents` : 'Loading...'}
-          </p>
-        </div>
-        <Button onClick={() => setShowAdd(true)}>
-          <Upload className="mr-2 h-4 w-4" />
-          Upload Document
-        </Button>
-      </div>
+      <PageHeader
+        title="Documents"
+        description={docs ? `${docs.length} documents` : 'Loading...'}
+        actions={
+          <Button onClick={() => setShowAdd(true)}>
+            <Upload className="mr-2 h-4 w-4" />
+            Upload Document
+          </Button>
+        }
+      />
 
       {loading ? (
         <div className="space-y-2">
@@ -85,25 +84,25 @@ export default function DocumentsPage() {
             {docs.map((doc) => (
               <div
                 key={doc.id}
-                className="flex items-center justify-between px-5 py-4 hover:bg-gray-50"
+                className="flex items-center justify-between gap-3 px-4 py-4 hover:bg-gray-50 md:px-5"
               >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50">
                     <FileText className="h-5 w-5 text-blue-600" />
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 break-words">
                       {doc.name}
                     </p>
-                    <div className="flex items-center gap-3 text-xs text-gray-400">
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400">
                       {doc.property && (
-                        <span className="flex items-center gap-1">
-                          <Building2 className="h-3 w-3" />
-                          {doc.property.name}
+                        <span className="flex min-w-0 items-center gap-1">
+                          <Building2 className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{doc.property.name}</span>
                         </span>
                       )}
                       {doc.lease?.tenant && (
-                        <span>Tenant: {doc.lease.tenant.name}</span>
+                        <span className="truncate">Tenant: {doc.lease.tenant.name}</span>
                       )}
                       {doc.sizeBytes && <span>{formatBytes(doc.sizeBytes)}</span>}
                       <span>
@@ -112,7 +111,7 @@ export default function DocumentsPage() {
                     </div>
                   </div>
                 </div>
-                <button className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+                <button className="shrink-0 rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
                   <Download className="h-4 w-4" />
                 </button>
               </div>

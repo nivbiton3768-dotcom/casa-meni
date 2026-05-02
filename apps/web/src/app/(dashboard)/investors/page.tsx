@@ -5,6 +5,7 @@ import { useApi } from '@/hooks/use-api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
+import { PageHeader } from '@/components/ui/page-header';
 import { AddInvestorForm } from '@/components/forms/add-investor-form';
 import { AddEntityForm } from '@/components/forms/add-entity-form';
 import { formatCents, cn } from '@/lib/utils';
@@ -63,24 +64,26 @@ export default function InvestorsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Investors & Entities</h1>
-          <p className="text-sm text-gray-500">
-            {portfolio ? `${portfolio.investorCount} investors, ${portfolio.entityCount} entities` : 'Loading...'}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => setShowEntity(true)} className="flex items-center gap-2">
-            <Landmark className="h-4 w-4" />
-            Add Entity
-          </Button>
-          <Button onClick={() => setShowInvestor(true)} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            Add Investor
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Investors & Entities"
+        description={
+          portfolio
+            ? `${portfolio.investorCount} investors, ${portfolio.entityCount} entities`
+            : 'Loading...'
+        }
+        actions={
+          <>
+            <Button variant="secondary" onClick={() => setShowEntity(true)} className="flex items-center gap-2">
+              <Landmark className="h-4 w-4" />
+              Add Entity
+            </Button>
+            <Button onClick={() => setShowInvestor(true)} className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Add Investor
+            </Button>
+          </>
+        }
+      />
 
       <Modal open={showInvestor} onClose={() => setShowInvestor(false)} title="Add Investor">
         <AddInvestorForm onSuccess={() => { setShowInvestor(false); refetchAll(); }} onCancel={() => setShowInvestor(false)} />
@@ -91,7 +94,7 @@ export default function InvestorsPage() {
 
       {/* Portfolio Stats */}
       {portfolio && (
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           <Card>
             <CardContent className="flex items-center gap-3 p-4">
               <div className="rounded-lg bg-green-50 p-2"><TrendingUp className="h-5 w-5 text-green-600" /></div>
@@ -134,9 +137,9 @@ export default function InvestorsPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Investors List */}
-        <div className="col-span-2 space-y-4">
+        <div className="space-y-4 lg:col-span-2">
           <h2 className="text-lg font-semibold text-gray-900">Investors</h2>
 
           {loading ? (
@@ -162,30 +165,30 @@ export default function InvestorsPage() {
               {investors.map((inv) => (
                 <Link key={inv.id} href={`/investors/${inv.id}`}>
                   <Card className="transition-shadow hover:shadow-md cursor-pointer">
-                    <CardContent className="p-5">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-purple-100 text-purple-700 font-semibold">
+                    <CardContent className="p-4 md:p-5">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex min-w-0 items-center gap-4">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-purple-100 text-purple-700 font-semibold">
                             {inv.name.split(' ').map((n) => n[0]).join('').toUpperCase()}
                           </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-semibold text-gray-900">{inv.name}</h3>
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h3 className="font-semibold text-gray-900 break-words">{inv.name}</h3>
                               <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
                                 {Number(inv.ownershipPct).toFixed(1)}%
                               </span>
                             </div>
-                            <div className="flex items-center gap-3 text-xs text-gray-500 mt-0.5">
-                              <span className="flex items-center gap-1"><Mail className="h-3 w-3" />{inv.email}</span>
-                              {inv.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{inv.phone}</span>}
+                            <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
+                              <span className="flex min-w-0 items-center gap-1"><Mail className="h-3 w-3 shrink-0" /><span className="truncate">{inv.email}</span></span>
+                              {inv.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3 shrink-0" />{inv.phone}</span>}
                               {inv.entity && (
-                                <span className="flex items-center gap-1"><Landmark className="h-3 w-3" />{inv.entity.name}</span>
+                                <span className="flex min-w-0 items-center gap-1"><Landmark className="h-3 w-3 shrink-0" /><span className="truncate">{inv.entity.name}</span></span>
                               )}
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <div className="text-right">
+                        <div className="flex items-center justify-between gap-3 sm:justify-end">
+                          <div className="text-left sm:text-right">
                             <p className="text-sm font-semibold text-gray-900">{formatCents(inv.totalDistributedCents)}</p>
                             <p className="text-xs text-gray-500">{inv._count.distributions} distributions</p>
                           </div>

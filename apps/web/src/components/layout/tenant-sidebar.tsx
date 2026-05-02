@@ -30,7 +30,7 @@ export function TenantSidebar() {
   };
 
   return (
-    <aside className="flex h-screen w-64 flex-col border-r border-gray-200 bg-white">
+    <aside className="hidden h-screen w-64 flex-col border-r border-gray-200 bg-white lg:flex">
       <div className="flex h-16 items-center gap-2 border-b border-gray-200 px-6">
         <Building2 className="h-7 w-7 text-emerald-600" />
         <div>

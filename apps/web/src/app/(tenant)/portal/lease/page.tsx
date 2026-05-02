@@ -4,6 +4,7 @@ import { useApi } from '@/hooks/use-api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { FileText, Building2, Calendar, DollarSign, Shield } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface LeaseDetail {
   id: string;
@@ -50,7 +51,7 @@ export default function TenantLeasePage() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 pb-6">
         {Array.from({ length: 3 }).map((_, i) => (
           <Card key={i}>
             <CardContent className="p-6">
@@ -64,7 +65,7 @@ export default function TenantLeasePage() {
 
   if (!lease) {
     return (
-      <div className="flex flex-col items-center py-20">
+      <div className="flex flex-col items-center px-4 py-20 text-center">
         <FileText className="h-12 w-12 text-gray-300" />
         <h2 className="mt-4 text-xl font-semibold text-gray-900">No Active Lease</h2>
         <p className="text-gray-500">Contact your property manager for details.</p>
@@ -82,13 +83,11 @@ export default function TenantLeasePage() {
     .reduce((s, p) => s + p.amountCents, 0);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">My Lease</h1>
-        <p className="text-sm text-gray-500">
-          {lease.unit.property.name} — Unit {lease.unit.unitNumber}
-        </p>
-      </div>
+    <div className="space-y-6 pb-6">
+      <PageHeader
+        title="My Lease"
+        description={`${lease.unit.property.name} — Unit ${lease.unit.unitNumber}`}
+      />
 
       {/* Lease Status Banner */}
       <div
@@ -101,12 +100,12 @@ export default function TenantLeasePage() {
               : 'border-emerald-200 bg-emerald-50',
         )}
       >
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
             <p className="text-sm font-medium text-gray-500">Lease Status</p>
-            <p className="text-lg font-bold text-gray-900">{lease.status}</p>
+            <p className="truncate text-lg font-bold text-gray-900">{lease.status}</p>
           </div>
-          <div className="text-right">
+          <div className="shrink-0 text-right">
             <p className="text-sm font-medium text-gray-500">Ends In</p>
             <p
               className={cn(
@@ -144,32 +143,32 @@ export default function TenantLeasePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Property</span>
-              <span className="font-medium">{lease.unit.property.name}</span>
+            <div className="flex justify-between gap-3 text-sm">
+              <span className="shrink-0 text-gray-500">Property</span>
+              <span className="min-w-0 break-words text-right font-medium">{lease.unit.property.name}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Address</span>
-              <span className="text-right font-medium">
+            <div className="flex justify-between gap-3 text-sm">
+              <span className="shrink-0 text-gray-500">Address</span>
+              <span className="min-w-0 break-words text-right font-medium">
                 {lease.unit.property.address}, {lease.unit.property.city},{' '}
                 {lease.unit.property.state} {lease.unit.property.zip}
               </span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Unit</span>
+            <div className="flex justify-between gap-3 text-sm">
+              <span className="shrink-0 text-gray-500">Unit</span>
               <span className="font-medium">{lease.unit.unitNumber}</span>
             </div>
             {lease.unit.bedrooms && (
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Bedrooms / Bathrooms</span>
+              <div className="flex justify-between gap-3 text-sm">
+                <span className="shrink-0 text-gray-500">Bedrooms / Bathrooms</span>
                 <span className="font-medium">
                   {lease.unit.bedrooms} bd / {lease.unit.bathrooms || 0} ba
                 </span>
               </div>
             )}
             {lease.unit.sqft && (
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Square Feet</span>
+              <div className="flex justify-between gap-3 text-sm">
+                <span className="shrink-0 text-gray-500">Square Feet</span>
                 <span className="font-medium">{lease.unit.sqft.toLocaleString()}</span>
               </div>
             )}
@@ -185,25 +184,25 @@ export default function TenantLeasePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Start Date</span>
+            <div className="flex justify-between gap-3 text-sm">
+              <span className="shrink-0 text-gray-500">Start Date</span>
               <span className="font-medium">{new Date(lease.startDate).toLocaleDateString()}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">End Date</span>
+            <div className="flex justify-between gap-3 text-sm">
+              <span className="shrink-0 text-gray-500">End Date</span>
               <span className="font-medium">{new Date(lease.endDate).toLocaleDateString()}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Monthly Rent</span>
+            <div className="flex justify-between gap-3 text-sm">
+              <span className="shrink-0 text-gray-500">Monthly Rent</span>
               <span className="text-lg font-bold text-gray-900">{fmt(lease.rentAmountCents)}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Security Deposit</span>
+            <div className="flex justify-between gap-3 text-sm">
+              <span className="shrink-0 text-gray-500">Security Deposit</span>
               <span className="font-medium">{fmt(lease.depositCents)}</span>
             </div>
             {lease.lateFeesCents > 0 && (
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Late Fee</span>
+              <div className="flex justify-between gap-3 text-sm">
+                <span className="shrink-0 text-gray-500">Late Fee</span>
                 <span className="font-medium text-red-600">{fmt(lease.lateFeesCents)}</span>
               </div>
             )}
@@ -220,7 +219,7 @@ export default function TenantLeasePage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
             <div className="rounded-lg bg-gray-50 p-4">
               <p className="text-xs text-gray-500">Total Lease Value</p>
               <p className="text-lg font-bold text-gray-900">
@@ -257,25 +256,25 @@ export default function TenantLeasePage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
+            <div className="flex flex-col flex-wrap gap-2">
               {lease.documents.map((doc) => (
                 <a
                   key={doc.id}
                   href={doc.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-gray-50"
+                  className="flex min-h-[3rem] items-center justify-between gap-3 rounded-lg border p-3 transition-colors hover:bg-gray-50"
                 >
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-blue-500" />
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{doc.name}</p>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <FileText className="h-5 w-5 shrink-0 text-blue-500" />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-gray-900">{doc.name}</p>
                       <p className="text-xs text-gray-500">
                         {(doc.sizeBytes / 1024).toFixed(0)} KB
                       </p>
                     </div>
                   </div>
-                  <span className="text-xs text-blue-600">Download</span>
+                  <span className="shrink-0 whitespace-nowrap text-xs text-blue-600">Download</span>
                 </a>
               ))}
             </div>

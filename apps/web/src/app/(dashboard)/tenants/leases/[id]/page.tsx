@@ -91,7 +91,7 @@ export default function LeaseDetailPage({
     return (
       <div className="space-y-6">
         <div className="h-8 w-48 animate-pulse rounded bg-gray-100" />
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-6">
           {Array.from({ length: 3 }).map((_, i) => (
             <Card key={i}>
               <CardContent className="p-6">
@@ -136,37 +136,35 @@ export default function LeaseDetailPage({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/tenants"
-            className="rounded-lg border p-2 text-gray-400 hover:bg-gray-50 hover:text-gray-600"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-900">
-                Lease — {lease.unit.property.name}
-              </h1>
-              <span
-                className={cn(
-                  'rounded-full px-3 py-0.5 text-xs font-medium',
-                  statusColors[lease.status] || 'bg-gray-100 text-gray-600',
-                )}
-              >
-                {lease.status}
-              </span>
-            </div>
-            <p className="text-sm text-gray-500">
-              Unit {lease.unit.unitNumber} — {lease.unit.property.address}
-            </p>
+      <div className="flex items-start gap-3 md:items-center md:gap-4">
+        <Link
+          href="/tenants"
+          className="shrink-0 rounded-lg border p-2 text-gray-400 hover:bg-gray-50 hover:text-gray-600"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2 md:gap-3">
+            <h1 className="text-xl font-bold text-gray-900 md:text-2xl">
+              Lease — {lease.unit.property.name}
+            </h1>
+            <span
+              className={cn(
+                'rounded-full px-3 py-0.5 text-xs font-medium',
+                statusColors[lease.status] || 'bg-gray-100 text-gray-600',
+              )}
+            >
+              {lease.status}
+            </span>
           </div>
+          <p className="text-sm text-gray-500 break-words">
+            Unit {lease.unit.unitNumber} — {lease.unit.property.address}
+          </p>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -244,7 +242,7 @@ export default function LeaseDetailPage({
         </Card>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left: Lease + Tenant info */}
         <div className="space-y-6">
           <Card>
@@ -307,22 +305,22 @@ export default function LeaseDetailPage({
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 text-purple-700 font-semibold">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purple-100 text-purple-700 font-semibold">
                   {lease.tenant.name
                     .split(' ')
                     .map((n) => n[0])
                     .join('')
                     .toUpperCase()}
                 </div>
-                <div>
-                  <p className="font-medium text-gray-900">{lease.tenant.name}</p>
-                  <p className="flex items-center gap-1 text-xs text-gray-500">
-                    <Mail className="h-3 w-3" />
-                    {lease.tenant.email}
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-gray-900">{lease.tenant.name}</p>
+                  <p className="flex min-w-0 items-center gap-1 text-xs text-gray-500">
+                    <Mail className="h-3 w-3 shrink-0" />
+                    <span className="truncate">{lease.tenant.email}</span>
                   </p>
                   {lease.tenant.phone && (
                     <p className="flex items-center gap-1 text-xs text-gray-500">
-                      <Phone className="h-3 w-3" />
+                      <Phone className="h-3 w-3 shrink-0" />
                       {lease.tenant.phone}
                     </p>
                   )}
@@ -365,7 +363,7 @@ export default function LeaseDetailPage({
         </div>
 
         {/* Right: Payment schedule */}
-        <div className="col-span-2">
+        <div className="lg:col-span-2">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
@@ -384,7 +382,7 @@ export default function LeaseDetailPage({
                     <div
                       key={payment.id}
                       className={cn(
-                        'flex items-center justify-between rounded-lg border px-4 py-3',
+                        'flex flex-wrap items-center justify-between gap-3 rounded-lg border px-3 py-3 sm:px-4',
                         isPaid
                           ? 'border-green-100 bg-green-50/50'
                           : isOverdue
@@ -392,15 +390,15 @@ export default function LeaseDetailPage({
                             : 'border-gray-100',
                       )}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
                         {isPaid ? (
-                          <CheckCircle2 className="h-5 w-5 text-green-500" />
+                          <CheckCircle2 className="h-5 w-5 shrink-0 text-green-500" />
                         ) : isOverdue ? (
-                          <AlertCircle className="h-5 w-5 text-red-500" />
+                          <AlertCircle className="h-5 w-5 shrink-0 text-red-500" />
                         ) : (
-                          <Clock className="h-5 w-5 text-gray-300" />
+                          <Clock className="h-5 w-5 shrink-0 text-gray-300" />
                         )}
-                        <div>
+                        <div className="min-w-0">
                           <p className="text-sm font-medium text-gray-900">
                             {formatCents(payment.amountCents)}
                           </p>

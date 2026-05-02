@@ -6,6 +6,7 @@ import { useApi } from '@/hooks/use-api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
+import { PageHeader } from '@/components/ui/page-header';
 import { AddPropertyForm } from '@/components/forms/add-property-form';
 import { formatCents } from '@/lib/utils';
 import {
@@ -66,18 +67,18 @@ export default function PropertiesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Properties</h1>
-          <p className="text-sm text-gray-500">
-            {data ? `${data.total} properties in your portfolio` : 'Loading...'}
-          </p>
-        </div>
-        <Button onClick={() => setShowAdd(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Property
-        </Button>
-      </div>
+      <PageHeader
+        title="Properties"
+        description={
+          data ? `${data.total} properties in your portfolio` : 'Loading...'
+        }
+        actions={
+          <Button onClick={() => setShowAdd(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Property
+          </Button>
+        }
+      />
 
       <Modal
         open={showAdd}

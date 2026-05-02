@@ -150,10 +150,10 @@ export default function PropertyDetailPage({
     return (
       <div className="space-y-6">
         <div className="h-8 w-48 animate-pulse rounded bg-gray-100" />
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardContent className="p-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <Card>
+            <CardContent className="p-6">
                 <div className="h-40 animate-pulse rounded bg-gray-50" />
               </CardContent>
             </Card>
@@ -179,46 +179,50 @@ export default function PropertyDetailPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link
-          href="/properties"
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-gray-900">
-              {property.name}
-            </h1>
-            <span
-              className={cn(
-                'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
-                config.color,
-              )}
-            >
-              <TypeIcon className="h-3 w-3" />
-              {config.label}
-            </span>
-          </div>
-          <div className="flex items-center gap-1 text-sm text-gray-500">
-            <MapPin className="h-3.5 w-3.5" />
-            {property.address}, {property.city}, {property.state} {property.zip}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
+        <div className="flex items-start gap-3 md:flex-1">
+          <Link
+            href="/properties"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-bold text-gray-900 md:text-2xl">
+                {property.name}
+              </h1>
+              <span
+                className={cn(
+                  'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
+                  config.color,
+                )}
+              >
+                <TypeIcon className="h-3 w-3" />
+                {config.label}
+              </span>
+            </div>
+            <div className="flex items-start gap-1 text-sm text-gray-500">
+              <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              <span className="min-w-0 break-words">
+                {property.address}, {property.city}, {property.state} {property.zip}
+              </span>
+            </div>
           </div>
         </div>
-        <Button variant="secondary">Edit Property</Button>
+        <Button variant="secondary" className="md:shrink-0">Edit Property</Button>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6 lg:col-span-2">
           {/* Units */}
           <Card>
-            <CardHeader className="flex-row items-center justify-between">
+            <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-gray-400" />
                 Units ({property.units.length})
               </CardTitle>
-              <Button size="sm" onClick={() => setShowAddUnit(true)}>
+              <Button size="sm" onClick={() => setShowAddUnit(true)} className="w-full sm:w-auto">
                 <Plus className="mr-1 h-3.5 w-3.5" />
                 Add Unit
               </Button>
@@ -247,9 +251,9 @@ export default function PropertyDetailPage({
                   {property.units.map((unit) => {
                     const activeLease = unit.leases[0];
                     return (
-                      <div key={unit.id} className="flex items-center justify-between py-3">
-                        <div>
-                          <div className="flex items-center gap-2">
+                      <div key={unit.id} className="flex items-start justify-between gap-3 py-3">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
                             <span className="font-medium text-gray-900">
                               Unit {unit.unitNumber}
                             </span>
@@ -270,7 +274,7 @@ export default function PropertyDetailPage({
                               : ''}
                           </p>
                         </div>
-                        <span className="text-sm font-semibold text-gray-900">
+                        <span className="shrink-0 text-sm font-semibold text-gray-900">
                           {formatCents(unit.rentAmountCents)}/mo
                         </span>
                       </div>
@@ -293,8 +297,8 @@ export default function PropertyDetailPage({
               <CardContent>
                 {property.renovations.map((reno) => (
                   <div key={reno.id}>
-                    <div className="flex items-center justify-between">
-                      <div>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
                         <p className="font-medium text-gray-900">{reno.name}</p>
                         <p className="text-xs text-gray-500 capitalize">
                           {reno.status.toLowerCase().replace(/_/g, ' ')}
@@ -302,7 +306,7 @@ export default function PropertyDetailPage({
                             ` · Started ${new Date(reno.startDate).toLocaleDateString()}`}
                         </p>
                       </div>
-                      <div className="text-right">
+                      <div className="text-left sm:text-right">
                         <p className="text-sm font-semibold text-gray-900">
                           {formatCents(reno.actualCostCents)} /{' '}
                           {formatCents(reno.budgetCents)}
@@ -335,9 +339,9 @@ export default function PropertyDetailPage({
                         {reno.expenses.map((exp) => (
                           <div
                             key={exp.id}
-                            className="flex items-center justify-between py-2"
+                            className="flex items-start justify-between gap-3 py-2"
                           >
-                            <div>
+                            <div className="min-w-0">
                               <p className="text-sm text-gray-700">
                                 {exp.description}
                               </p>
@@ -346,7 +350,7 @@ export default function PropertyDetailPage({
                                 {new Date(exp.date).toLocaleDateString()}
                               </p>
                             </div>
-                            <span className="text-sm font-medium text-gray-900">
+                            <span className="shrink-0 text-sm font-medium text-gray-900">
                               {formatCents(exp.amountCents)}
                             </span>
                           </div>
@@ -375,12 +379,12 @@ export default function PropertyDetailPage({
                     return (
                       <div
                         key={tx.id}
-                        className="flex items-center justify-between py-2.5"
+                        className="flex items-start justify-between gap-3 py-2.5"
                       >
-                        <div className="flex items-center gap-2">
+                        <div className="flex min-w-0 items-center gap-2">
                           <div
                             className={cn(
-                              'flex h-6 w-6 items-center justify-center rounded-full',
+                              'flex h-6 w-6 shrink-0 items-center justify-center rounded-full',
                               isIncome ? 'bg-green-50' : 'bg-red-50',
                             )}
                           >
@@ -390,8 +394,8 @@ export default function PropertyDetailPage({
                               <ArrowDownRight className="h-3 w-3 text-red-600" />
                             )}
                           </div>
-                          <div>
-                            <p className="text-sm text-gray-700">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm text-gray-700">
                               {tx.description}
                             </p>
                             <p className="text-xs text-gray-400">
@@ -401,7 +405,7 @@ export default function PropertyDetailPage({
                         </div>
                         <span
                           className={cn(
-                            'text-sm font-medium',
+                            'shrink-0 text-sm font-medium',
                             isIncome ? 'text-green-600' : 'text-red-600',
                           )}
                         >
@@ -428,8 +432,8 @@ export default function PropertyDetailPage({
               <CardContent>
                 <div className="divide-y">
                   {property.maintenanceJobs.map((job) => (
-                    <div key={job.id} className="flex items-center justify-between py-2.5">
-                      <div>
+                    <div key={job.id} className="flex items-start justify-between gap-3 py-2.5">
+                      <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-700">
                           {job.title}
                         </p>
@@ -442,7 +446,7 @@ export default function PropertyDetailPage({
                       </div>
                       <span
                         className={cn(
-                          'rounded-full px-2 py-0.5 text-xs font-medium',
+                          'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
                           job.priority === 'EMERGENCY'
                             ? 'bg-red-100 text-red-700'
                             : job.priority === 'HIGH'

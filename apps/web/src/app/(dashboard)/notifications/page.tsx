@@ -5,6 +5,7 @@ import { useApi } from '@/hooks/use-api';
 import { useToast } from '@/components/ui/toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/ui/page-header';
 import { apiFetch, cn } from '@/lib/utils';
 import {
   Bell,
@@ -79,26 +80,26 @@ export default function NotificationsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-          <p className="text-sm text-gray-500">
-            {notifications ? `${notifications.length} total, ${unreadCount} unread` : 'Loading...'}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={handleGenerate} disabled={generating} className="flex items-center gap-2">
-            <RefreshCw className={cn('h-4 w-4', generating && 'animate-spin')} />
-            {generating ? 'Checking...' : 'Check for Alerts'}
-          </Button>
-          {unreadCount > 0 && (
-            <Button variant="secondary" onClick={handleMarkAllRead} className="flex items-center gap-2">
-              <CheckCheck className="h-4 w-4" />
-              Mark All Read
+      <PageHeader
+        title="Notifications"
+        description={
+          notifications ? `${notifications.length} total, ${unreadCount} unread` : 'Loading...'
+        }
+        actions={
+          <>
+            <Button variant="secondary" onClick={handleGenerate} disabled={generating} className="flex items-center gap-2">
+              <RefreshCw className={cn('h-4 w-4', generating && 'animate-spin')} />
+              {generating ? 'Checking...' : 'Check for Alerts'}
             </Button>
-          )}
-        </div>
-      </div>
+            {unreadCount > 0 && (
+              <Button variant="secondary" onClick={handleMarkAllRead} className="flex items-center gap-2">
+                <CheckCheck className="h-4 w-4" />
+                Mark All Read
+              </Button>
+            )}
+          </>
+        }
+      />
 
       {/* Filters */}
       <div className="flex gap-2">
@@ -169,28 +170,30 @@ export default function NotificationsPage() {
                 )}
               >
                 <CardContent className="p-4">
-                  <div className="flex items-start gap-4">
-                    <div className={cn('rounded-lg p-2.5', config.bg)}>
-                      <Icon className={cn('h-5 w-5', config.color)} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className={cn('rounded px-2 py-0.5 text-xs font-medium', config.bg, config.color)}>
-                          {config.label}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          {new Date(n.createdAt).toLocaleString()}
-                        </span>
-                        {!n.isRead && (
-                          <span className="rounded-full bg-blue-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                            NEW
-                          </span>
-                        )}
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+                    <div className="flex gap-3 sm:contents">
+                      <div className={cn('h-fit shrink-0 rounded-lg p-2.5', config.bg)}>
+                        <Icon className={cn('h-5 w-5', config.color)} />
                       </div>
-                      <h3 className="mt-1 font-medium text-gray-900">{n.title}</h3>
-                      <p className="mt-0.5 text-sm text-gray-500">{n.message}</p>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={cn('rounded px-2 py-0.5 text-xs font-medium', config.bg, config.color)}>
+                            {config.label}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {new Date(n.createdAt).toLocaleString()}
+                          </span>
+                          {!n.isRead && (
+                            <span className="rounded-full bg-blue-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                              NEW
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="mt-1 font-medium text-gray-900 break-words">{n.title}</h3>
+                        <p className="mt-0.5 text-sm text-gray-500 break-words">{n.message}</p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex shrink-0 items-center gap-2 sm:self-start">
                       {n.linkUrl && (
                         <Link
                           href={n.linkUrl}

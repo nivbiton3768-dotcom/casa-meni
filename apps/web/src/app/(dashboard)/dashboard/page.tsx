@@ -37,8 +37,8 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+      <div className="min-w-0">
+        <h1 className="text-xl font-bold text-gray-900 md:text-2xl">Dashboard</h1>
         <p className="text-sm text-gray-500">
           Welcome back{user ? `, ${user.name.split(' ')[0]}` : ''}. Here&apos;s
           your portfolio overview.
@@ -46,7 +46,7 @@ export default function DashboardPage() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
             <Card key={i}>
               <CardContent className="flex items-center gap-4 p-6">
@@ -61,7 +61,7 @@ export default function DashboardPage() {
         </div>
       ) : stats ? (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
             <StatCard
               name="Properties"
               value={stats.totalProperties.toString()}
@@ -234,15 +234,15 @@ function StatCard({
 }) {
   return (
     <Card>
-      <CardContent className="flex items-center gap-4 p-6">
-        <div className={`rounded-lg p-3 ${color}`}>
-          <Icon className="h-6 w-6" />
+      <CardContent className="flex items-center gap-3 p-4 md:gap-4 md:p-6">
+        <div className={`shrink-0 rounded-lg p-2.5 md:p-3 ${color}`}>
+          <Icon className="h-5 w-5 md:h-6 md:w-6" />
         </div>
-        <div>
-          <p className="text-sm text-gray-500">{name}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
+        <div className="min-w-0">
+          <p className="truncate text-xs text-gray-500 md:text-sm">{name}</p>
+          <p className="truncate text-lg font-bold text-gray-900 md:text-2xl">{value}</p>
           {subtitle && (
-            <p className="text-xs text-gray-400">{subtitle}</p>
+            <p className="truncate text-xs text-gray-400">{subtitle}</p>
           )}
         </div>
       </CardContent>

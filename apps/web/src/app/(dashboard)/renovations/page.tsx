@@ -5,6 +5,7 @@ import { useApi } from '@/hooks/use-api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
+import { PageHeader } from '@/components/ui/page-header';
 import { AddRenovationForm } from '@/components/forms/add-renovation-form';
 import { formatCents, cn } from '@/lib/utils';
 import {
@@ -56,20 +57,20 @@ export default function RenovationsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Renovations</h1>
-          <p className="text-sm text-gray-500">
-            {renovations
-              ? `${renovations.length} projects, ${activeCount} active`
-              : 'Loading...'}
-          </p>
-        </div>
-        <Button onClick={() => setShowCreate(true)} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          New Renovation
-        </Button>
-      </div>
+      <PageHeader
+        title="Renovations"
+        description={
+          renovations
+            ? `${renovations.length} projects, ${activeCount} active`
+            : 'Loading...'
+        }
+        actions={
+          <Button onClick={() => setShowCreate(true)} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            New Renovation
+          </Button>
+        }
+      />
 
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Start New Renovation" size="lg">
         <AddRenovationForm onSuccess={() => { setShowCreate(false); refetch(); }} onCancel={() => setShowCreate(false)} />
@@ -77,7 +78,7 @@ export default function RenovationsPage() {
 
       {/* Summary Cards */}
       {renovations && renovations.length > 0 && (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
           <Card>
             <CardContent className="flex items-center gap-3 p-4">
               <div className="rounded-lg bg-blue-50 p-2">
@@ -152,27 +153,27 @@ export default function RenovationsPage() {
             return (
               <Link key={reno.id} href={`/renovations/${reno.id}`}>
                 <Card className="transition-shadow hover:shadow-md cursor-pointer">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-4">
-                        <div className={cn('rounded-lg p-2.5', overBudget ? 'bg-red-50' : 'bg-amber-50')}>
+                  <CardContent className="p-4 md:p-6">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="flex min-w-0 items-start gap-3 md:gap-4">
+                        <div className={cn('shrink-0 rounded-lg p-2.5', overBudget ? 'bg-red-50' : 'bg-amber-50')}>
                           <Hammer className={cn('h-6 w-6', overBudget ? 'text-red-600' : 'text-amber-600')} />
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
                             <h3 className="font-semibold text-gray-900">{reno.name}</h3>
                             <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-medium', statusStyles[reno.status] || 'bg-gray-100 text-gray-600')}>
                               {reno.status.replace('_', ' ')}
                             </span>
                           </div>
-                          <div className="mt-1 flex items-center gap-3 text-sm text-gray-500">
-                            <span className="flex items-center gap-1">
-                              <MapPin className="h-3.5 w-3.5" />
-                              {reno.property.name}
+                          <div className="mt-1 flex flex-col gap-1 text-sm text-gray-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+                            <span className="flex min-w-0 items-center gap-1">
+                              <MapPin className="h-3.5 w-3.5 shrink-0" />
+                              <span className="truncate">{reno.property.name}</span>
                             </span>
                             {reno.startDate && (
                               <span className="flex items-center gap-1">
-                                <Calendar className="h-3.5 w-3.5" />
+                                <Calendar className="h-3.5 w-3.5 shrink-0" />
                                 {new Date(reno.startDate).toLocaleDateString()}
                                 {reno.endDate && ` — ${new Date(reno.endDate).toLocaleDateString()}`}
                               </span>
@@ -180,7 +181,7 @@ export default function RenovationsPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
+                      <div className="text-left sm:shrink-0 sm:text-right">
                         <p className="text-sm font-semibold text-gray-900">
                           {formatCents(reno.actualCostCents)} / {formatCents(reno.budgetCents)}
                         </p>

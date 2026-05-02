@@ -97,7 +97,7 @@ export default function InvestorDetailPage({
     return (
       <div className="space-y-6">
         <div className="h-8 w-48 animate-pulse rounded bg-gray-100" />
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <Card key={i}><CardContent className="p-4"><div className="h-16 animate-pulse rounded bg-gray-50" /></CardContent></Card>
           ))}
@@ -120,26 +120,26 @@ export default function InvestorDetailPage({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/investors" className="rounded-lg border p-2 text-gray-400 hover:bg-gray-50 hover:text-gray-600">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex min-w-0 items-start gap-3 md:items-center md:gap-4">
+          <Link href="/investors" className="shrink-0 rounded-lg border p-2 text-gray-400 hover:bg-gray-50 hover:text-gray-600">
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-900">{investor.name}</h1>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2 md:gap-3">
+              <h1 className="text-xl font-bold text-gray-900 md:text-2xl break-words">{investor.name}</h1>
               <span className="rounded-full bg-blue-100 px-3 py-0.5 text-sm font-medium text-blue-700">
                 {Number(investor.ownershipPct).toFixed(1)}% ownership
               </span>
             </div>
-            <div className="flex items-center gap-3 text-sm text-gray-500 mt-0.5">
-              <span className="flex items-center gap-1"><Mail className="h-3.5 w-3.5" />{investor.email}</span>
-              {investor.phone && <span className="flex items-center gap-1"><Phone className="h-3.5 w-3.5" />{investor.phone}</span>}
-              {investor.entity && <span className="flex items-center gap-1"><Landmark className="h-3.5 w-3.5" />{investor.entity.name} ({investor.entity.type})</span>}
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
+              <span className="flex min-w-0 items-center gap-1"><Mail className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{investor.email}</span></span>
+              {investor.phone && <span className="flex items-center gap-1"><Phone className="h-3.5 w-3.5 shrink-0" />{investor.phone}</span>}
+              {investor.entity && <span className="flex min-w-0 items-center gap-1"><Landmark className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{investor.entity.name} ({investor.entity.type})</span></span>}
             </div>
           </div>
         </div>
-        <Button onClick={() => setShowDist(true)} className="flex items-center gap-2">
+        <Button onClick={() => setShowDist(true)} className="flex items-center gap-2 self-start md:self-auto">
           <Plus className="h-4 w-4" />
           Record Distribution
         </Button>
@@ -150,7 +150,7 @@ export default function InvestorDetailPage({
       </Modal>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -252,9 +252,9 @@ export default function InvestorDetailPage({
         </Card>
       )}
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* P&L by Property */}
-        <div className="col-span-2 space-y-4">
+        <div className="space-y-4 lg:col-span-2">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
@@ -271,16 +271,16 @@ export default function InvestorDetailPage({
                 <div className="space-y-3">
                   {pnl.properties.map((prop) => (
                     <div key={prop.propertyId} className="rounded-lg border border-gray-100 p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <Link href={`/properties/${prop.propertyId}`} className="flex items-center gap-2 text-sm font-semibold text-gray-900 hover:text-blue-600">
-                          <Building2 className="h-4 w-4" />
-                          {prop.propertyName}
+                      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                        <Link href={`/properties/${prop.propertyId}`} className="flex min-w-0 items-center gap-2 text-sm font-semibold text-gray-900 hover:text-blue-600">
+                          <Building2 className="h-4 w-4 shrink-0" />
+                          <span className="truncate">{prop.propertyName}</span>
                         </Link>
                         <span className={cn('text-sm font-bold', prop.netCents >= 0 ? 'text-green-600' : 'text-red-600')}>
                           {prop.netCents >= 0 ? '+' : ''}{formatCents(prop.netCents)}
                         </span>
                       </div>
-                      <div className="flex gap-4 text-xs">
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
                         <span className="flex items-center gap-1 text-green-600">
                           <ArrowUpRight className="h-3 w-3" />
                           Income: {formatCents(prop.incomeCents)}

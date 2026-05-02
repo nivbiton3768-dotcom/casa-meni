@@ -48,7 +48,7 @@ export default function SignupPage() {
         <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-blue-600">
           <Building2 className="h-6 w-6 text-white" />
         </div>
-        <CardTitle className="text-2xl">Create your account</CardTitle>
+        <CardTitle className="text-2xl md:text-3xl">Create your account</CardTitle>
         <p className="text-sm text-gray-500">
           Start managing your properties with Casa Meni
         </p>
@@ -56,7 +56,7 @@ export default function SignupPage() {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 break-words">
               {error}
             </div>
           )}
@@ -69,6 +69,7 @@ export default function SignupPage() {
               value={form.organizationName}
               onChange={(e) => update('organizationName', e.target.value)}
               required
+              className="text-base md:text-sm"
             />
           </div>
           <div className="space-y-2">
@@ -80,6 +81,7 @@ export default function SignupPage() {
               value={form.name}
               onChange={(e) => update('name', e.target.value)}
               required
+              className="text-base md:text-sm"
             />
           </div>
           <div className="space-y-2">
@@ -90,6 +92,7 @@ export default function SignupPage() {
               value={form.email}
               onChange={(e) => update('email', e.target.value)}
               required
+              className="text-base md:text-sm"
             />
           </div>
           <div className="space-y-2">
@@ -103,9 +106,10 @@ export default function SignupPage() {
               onChange={(e) => update('password', e.target.value)}
               required
               minLength={8}
+              className="text-base md:text-sm"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full py-2.5" disabled={loading}>
             {loading ? 'Creating account...' : 'Create account'}
           </Button>
           <p className="text-center text-sm text-gray-500">

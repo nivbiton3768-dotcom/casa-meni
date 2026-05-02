@@ -131,7 +131,7 @@ export default function RenovationDetailPage({
     return (
       <div className="space-y-6">
         <div className="h-8 w-48 animate-pulse rounded bg-gray-100" />
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <Card key={i}><CardContent className="p-4"><div className="h-16 animate-pulse rounded bg-gray-50" /></CardContent></Card>
           ))}
@@ -155,31 +155,34 @@ export default function RenovationDetailPage({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/renovations" className="rounded-lg border p-2 text-gray-400 hover:bg-gray-50 hover:text-gray-600">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-start gap-3 md:items-center md:gap-4">
+          <Link href="/renovations" className="shrink-0 rounded-lg border p-2 text-gray-400 hover:bg-gray-50 hover:text-gray-600">
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-900">{reno.name}</h1>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2 md:gap-3">
+              <h1 className="text-xl font-bold text-gray-900 md:text-2xl">{reno.name}</h1>
               <span className={cn('rounded-full px-3 py-0.5 text-xs font-medium', statusStyles[reno.status] || 'bg-gray-100 text-gray-600')}>
                 {reno.status.replace('_', ' ')}
               </span>
             </div>
-            <p className="flex items-center gap-1 text-sm text-gray-500">
-              <MapPin className="h-3.5 w-3.5" />
-              <Link href={`/properties/${reno.property.id}`} className="hover:underline">
-                {reno.property.name}
-              </Link>
-              — {reno.property.address}
+            <p className="flex items-start gap-1 text-sm text-gray-500">
+              <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span className="min-w-0 break-words">
+                <Link href={`/properties/${reno.property.id}`} className="hover:underline">
+                  {reno.property.name}
+                </Link>
+                {' — '}
+                {reno.property.address}
+              </span>
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 md:shrink-0">
           {reno.status !== 'COMPLETED' && (
             <select
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+              className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm md:flex-none"
               value={reno.status}
               onChange={(e) => handleStatusChange(e.target.value)}
               disabled={updatingStatus}
@@ -202,14 +205,14 @@ export default function RenovationDetailPage({
       </Modal>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-blue-50 p-2"><DollarSign className="h-5 w-5 text-blue-600" /></div>
-              <div>
-                <p className="text-xs text-gray-500">Budget</p>
-                <p className="text-lg font-bold text-gray-900">{formatCents(reno.budgetCents)}</p>
+              <div className="shrink-0 rounded-lg bg-blue-50 p-2"><DollarSign className="h-5 w-5 text-blue-600" /></div>
+              <div className="min-w-0">
+                <p className="truncate text-xs text-gray-500">Budget</p>
+                <p className="truncate text-lg font-bold text-gray-900">{formatCents(reno.budgetCents)}</p>
               </div>
             </div>
           </CardContent>
@@ -217,12 +220,12 @@ export default function RenovationDetailPage({
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className={cn('rounded-lg p-2', overBudget ? 'bg-red-50' : 'bg-green-50')}>
+              <div className={cn('shrink-0 rounded-lg p-2', overBudget ? 'bg-red-50' : 'bg-green-50')}>
                 <TrendingUp className={cn('h-5 w-5', overBudget ? 'text-red-600' : 'text-green-600')} />
               </div>
-              <div>
-                <p className="text-xs text-gray-500">Spent</p>
-                <p className={cn('text-lg font-bold', overBudget ? 'text-red-600' : 'text-gray-900')}>{formatCents(reno.actualCostCents)}</p>
+              <div className="min-w-0">
+                <p className="truncate text-xs text-gray-500">Spent</p>
+                <p className={cn('truncate text-lg font-bold', overBudget ? 'text-red-600' : 'text-gray-900')}>{formatCents(reno.actualCostCents)}</p>
               </div>
             </div>
           </CardContent>
@@ -230,12 +233,12 @@ export default function RenovationDetailPage({
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className={cn('rounded-lg p-2', overBudget ? 'bg-red-50' : 'bg-emerald-50')}>
+              <div className={cn('shrink-0 rounded-lg p-2', overBudget ? 'bg-red-50' : 'bg-emerald-50')}>
                 {overBudget ? <AlertTriangle className="h-5 w-5 text-red-600" /> : <DollarSign className="h-5 w-5 text-emerald-600" />}
               </div>
-              <div>
-                <p className="text-xs text-gray-500">{overBudget ? 'Over Budget' : 'Remaining'}</p>
-                <p className={cn('text-lg font-bold', overBudget ? 'text-red-600' : 'text-emerald-600')}>
+              <div className="min-w-0">
+                <p className="truncate text-xs text-gray-500">{overBudget ? 'Over Budget' : 'Remaining'}</p>
+                <p className={cn('truncate text-lg font-bold', overBudget ? 'text-red-600' : 'text-emerald-600')}>
                   {formatCents(Math.abs(reno.budgetRemaining))}
                 </p>
               </div>
@@ -245,10 +248,10 @@ export default function RenovationDetailPage({
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-purple-50 p-2"><Wrench className="h-5 w-5 text-purple-600" /></div>
-              <div>
-                <p className="text-xs text-gray-500">Expenses</p>
-                <p className="text-lg font-bold text-gray-900">{reno.expenses.length}</p>
+              <div className="shrink-0 rounded-lg bg-purple-50 p-2"><Wrench className="h-5 w-5 text-purple-600" /></div>
+              <div className="min-w-0">
+                <p className="truncate text-xs text-gray-500">Expenses</p>
+                <p className="truncate text-lg font-bold text-gray-900">{reno.expenses.length}</p>
               </div>
             </div>
           </CardContent>
@@ -273,7 +276,7 @@ export default function RenovationDetailPage({
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Breakdown by Category */}
         <Card>
           <CardHeader><CardTitle className="text-base">Cost Breakdown</CardTitle></CardHeader>
@@ -302,7 +305,7 @@ export default function RenovationDetailPage({
         </Card>
 
         {/* Expense List */}
-        <div className="col-span-2">
+        <div className="lg:col-span-2">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -322,28 +325,28 @@ export default function RenovationDetailPage({
               ) : (
                 <div className="space-y-2">
                   {reno.expenses.map((exp) => (
-                    <div key={exp.id} className="flex items-center justify-between rounded-lg border border-gray-100 px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', categoryColors[exp.category] || 'bg-gray-100 text-gray-600')}>
+                    <div key={exp.id} className="flex flex-col gap-3 rounded-lg border border-gray-100 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+                      <div className="flex min-w-0 items-start gap-3">
+                        <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-xs font-medium', categoryColors[exp.category] || 'bg-gray-100 text-gray-600')}>
                           {categoryLabels[exp.category] || exp.category}
                         </span>
-                        <div>
+                        <div className="min-w-0">
                           <p className="text-sm font-medium text-gray-900">{exp.description}</p>
-                          <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
                             <span className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
+                              <Calendar className="h-3 w-3 shrink-0" />
                               {new Date(exp.date).toLocaleDateString()}
                             </span>
                             {exp.vendor && (
-                              <span className="flex items-center gap-1">
-                                <Store className="h-3 w-3" />
-                                {exp.vendor.name}
+                              <span className="flex min-w-0 items-center gap-1">
+                                <Store className="h-3 w-3 shrink-0" />
+                                <span className="truncate">{exp.vendor.name}</span>
                               </span>
                             )}
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-between gap-3 sm:justify-end">
                         <p className="text-sm font-semibold text-gray-900">
                           {formatCents(exp.amountCents)}
                         </p>
@@ -376,7 +379,7 @@ export default function RenovationDetailPage({
 
       {/* Date info */}
       {(reno.startDate || reno.endDate) && (
-        <div className="flex gap-4 text-sm text-gray-500">
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-500">
           {reno.startDate && (
             <span className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />

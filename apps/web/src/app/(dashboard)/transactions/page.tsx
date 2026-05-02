@@ -5,6 +5,7 @@ import { useApi } from '@/hooks/use-api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Modal } from '@/components/ui/modal';
+import { PageHeader } from '@/components/ui/page-header';
 import { AddTransactionForm } from '@/components/forms/add-transaction-form';
 import { formatCents, cn } from '@/lib/utils';
 import {
@@ -55,18 +56,16 @@ export default function TransactionsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Transactions</h1>
-          <p className="text-sm text-gray-500">
-            Income, expenses, and P&amp;L tracking
-          </p>
-        </div>
-        <Button onClick={() => setShowAdd(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Transaction
-        </Button>
-      </div>
+      <PageHeader
+        title="Transactions"
+        description="Income, expenses, and P&L tracking"
+        actions={
+          <Button onClick={() => setShowAdd(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Transaction
+          </Button>
+        }
+      />
 
       <Modal
         open={showAdd}
@@ -80,15 +79,15 @@ export default function TransactionsPage() {
         />
       </Modal>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card>
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="rounded-lg bg-green-50 p-3">
-              <TrendingUp className="h-6 w-6 text-green-600" />
+          <CardContent className="flex items-center gap-3 p-4 md:gap-4 md:p-6">
+            <div className="shrink-0 rounded-lg bg-green-50 p-2.5 md:p-3">
+              <TrendingUp className="h-5 w-5 text-green-600 md:h-6 md:w-6" />
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Total Income</p>
-              <p className="text-2xl font-bold text-gray-900">
+            <div className="min-w-0">
+              <p className="text-xs text-gray-500 md:text-sm">Total Income</p>
+              <p className="truncate text-lg font-bold text-gray-900 md:text-2xl">
                 {loading ? '...' : formatCents(pnl?.totalIncomeCents || 0)}
               </p>
             </div>
@@ -96,13 +95,13 @@ export default function TransactionsPage() {
         </Card>
 
         <Card>
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="rounded-lg bg-red-50 p-3">
-              <TrendingDown className="h-6 w-6 text-red-600" />
+          <CardContent className="flex items-center gap-3 p-4 md:gap-4 md:p-6">
+            <div className="shrink-0 rounded-lg bg-red-50 p-2.5 md:p-3">
+              <TrendingDown className="h-5 w-5 text-red-600 md:h-6 md:w-6" />
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Total Expenses</p>
-              <p className="text-2xl font-bold text-gray-900">
+            <div className="min-w-0">
+              <p className="text-xs text-gray-500 md:text-sm">Total Expenses</p>
+              <p className="truncate text-lg font-bold text-gray-900 md:text-2xl">
                 {loading ? '...' : formatCents(pnl?.totalExpensesCents || 0)}
               </p>
             </div>
@@ -110,15 +109,15 @@ export default function TransactionsPage() {
         </Card>
 
         <Card>
-          <CardContent className="flex items-center gap-4 p-6">
-            <div className="rounded-lg bg-blue-50 p-3">
-              <DollarSign className="h-6 w-6 text-blue-600" />
+          <CardContent className="flex items-center gap-3 p-4 md:gap-4 md:p-6">
+            <div className="shrink-0 rounded-lg bg-blue-50 p-2.5 md:p-3">
+              <DollarSign className="h-5 w-5 text-blue-600 md:h-6 md:w-6" />
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Net Income</p>
+            <div className="min-w-0">
+              <p className="text-xs text-gray-500 md:text-sm">Net Income</p>
               <p
                 className={cn(
-                  'text-2xl font-bold',
+                  'truncate text-lg font-bold md:text-2xl',
                   (pnl?.netIncomeCents || 0) >= 0
                     ? 'text-green-600'
                     : 'text-red-600',
@@ -180,12 +179,12 @@ export default function TransactionsPage() {
                 return (
                   <div
                     key={tx.id}
-                    className="flex items-center justify-between py-3"
+                    className="flex items-start justify-between gap-3 py-3"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
                       <div
                         className={cn(
-                          'flex h-8 w-8 items-center justify-center rounded-full',
+                          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
                           isIncome ? 'bg-green-50' : 'bg-red-50',
                         )}
                       >
@@ -195,8 +194,8 @@ export default function TransactionsPage() {
                           <ArrowDownRight className="h-4 w-4 text-red-600" />
                         )}
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-gray-900">
                           {tx.description}
                         </p>
                         <p className="text-xs text-gray-500">
@@ -210,7 +209,7 @@ export default function TransactionsPage() {
                     </div>
                     <span
                       className={cn(
-                        'text-sm font-semibold',
+                        'shrink-0 text-sm font-semibold',
                         isIncome ? 'text-green-600' : 'text-red-600',
                       )}
                     >

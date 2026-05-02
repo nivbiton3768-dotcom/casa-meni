@@ -19,7 +19,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+        <h1 className="text-xl font-bold text-gray-900 md:text-2xl">Settings</h1>
         <p className="text-sm text-gray-500">
           Manage your account and organization settings
         </p>
@@ -37,7 +37,7 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     <label className="mb-1 block text-sm font-medium text-gray-700">
                       Name
@@ -99,7 +99,7 @@ export default function SettingsPage() {
                   </label>
                   <Input type="password" placeholder="Enter current password" />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     <label className="mb-1 block text-sm font-medium text-gray-700">
                       New Password

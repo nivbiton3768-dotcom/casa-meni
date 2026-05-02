@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface Payment {
   id: string;
@@ -78,7 +79,7 @@ export default function TenantDashboard() {
 
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 pb-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <Card key={i}>
@@ -94,7 +95,7 @@ export default function TenantDashboard() {
 
   if (!data?.lease) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
+      <div className="flex flex-col items-center justify-center px-4 py-20 text-center">
         <div className="rounded-full bg-gray-100 p-6">
           <Calendar className="h-12 w-12 text-gray-400" />
         </div>
@@ -111,13 +112,11 @@ export default function TenantDashboard() {
   const s = data.summary!;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">My Home</h1>
-        <p className="text-sm text-gray-500">
-          {data.lease.property.name} — Unit {data.lease.unit.unitNumber}
-        </p>
-      </div>
+    <div className="space-y-6 pb-6">
+      <PageHeader
+        title="My Home"
+        description={`${data.lease.property.name} — Unit ${data.lease.unit.unitNumber}`}
+      />
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -191,42 +190,42 @@ export default function TenantDashboard() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Lease Info */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Lease Details</CardTitle>
-            <Link href="/portal/lease">
+          <CardHeader className="flex flex-row items-center justify-between gap-2">
+            <CardTitle className="min-w-0 truncate">Lease Details</CardTitle>
+            <Link href="/portal/lease" className="shrink-0">
               <Button variant="ghost" className="text-sm">
                 View Full <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </Link>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Property</span>
-              <span className="font-medium">{data.lease.property.name}</span>
+            <div className="flex justify-between gap-3 text-sm">
+              <span className="shrink-0 text-gray-500">Property</span>
+              <span className="min-w-0 break-words text-right font-medium">{data.lease.property.name}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Address</span>
-              <span className="font-medium text-right max-w-[60%]">{data.lease.property.address}</span>
+            <div className="flex justify-between gap-3 text-sm">
+              <span className="shrink-0 text-gray-500">Address</span>
+              <span className="min-w-0 max-w-[65%] break-words text-right font-medium">{data.lease.property.address}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Unit</span>
+            <div className="flex justify-between gap-3 text-sm">
+              <span className="shrink-0 text-gray-500">Unit</span>
               <span className="font-medium">{data.lease.unit.unitNumber}</span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Lease Period</span>
-              <span className="font-medium">
+            <div className="flex justify-between gap-3 text-sm">
+              <span className="shrink-0 text-gray-500">Lease Period</span>
+              <span className="min-w-0 break-words text-right font-medium">
                 {new Date(data.lease.startDate).toLocaleDateString()} —{' '}
                 {new Date(data.lease.endDate).toLocaleDateString()}
               </span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Lease Ends In</span>
+            <div className="flex justify-between gap-3 text-sm">
+              <span className="shrink-0 text-gray-500">Lease Ends In</span>
               <span className={cn('font-medium', s.daysUntilLeaseEnd <= 30 ? 'text-red-600' : 'text-gray-900')}>
                 {s.daysUntilLeaseEnd} days
               </span>
             </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Deposit</span>
+            <div className="flex justify-between gap-3 text-sm">
+              <span className="shrink-0 text-gray-500">Deposit</span>
               <span className="font-medium">{fmt(data.lease.depositCents)}</span>
             </div>
           </CardContent>
@@ -234,11 +233,13 @@ export default function TenantDashboard() {
 
         {/* Upcoming Payments */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Upcoming Payments</CardTitle>
-            <Link href="/portal/payments">
+          <CardHeader className="flex flex-row items-center justify-between gap-2">
+            <CardTitle className="min-w-0 truncate">Upcoming Payments</CardTitle>
+            <Link href="/portal/payments" className="shrink-0">
               <Button variant="ghost" className="text-sm">
-                All Payments <ArrowRight className="ml-1 h-4 w-4" />
+                <span className="hidden sm:inline">All Payments</span>
+                <span className="sm:hidden">All</span>
+                <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </Link>
           </CardHeader>
@@ -254,8 +255,8 @@ export default function TenantDashboard() {
               {[...data.payments.overdue, ...data.payments.upcoming].slice(0, 5).map((p) => {
                 const isOverdue = !p.paidAt && new Date(p.dueDate) < new Date();
                 return (
-                  <div key={p.id} className="flex items-center justify-between rounded-lg border p-3">
-                    <div>
+                  <div key={p.id} className="flex items-center justify-between gap-3 rounded-lg border p-3">
+                    <div className="min-w-0">
                       <p className={cn('text-sm font-medium', isOverdue ? 'text-red-600' : 'text-gray-900')}>
                         {fmt(p.amountCents)}
                       </p>
@@ -264,11 +265,11 @@ export default function TenantDashboard() {
                       </p>
                     </div>
                     {isOverdue ? (
-                      <span className="rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                      <span className="shrink-0 whitespace-nowrap rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
                         Overdue
                       </span>
                     ) : (
-                      <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                      <span className="shrink-0 whitespace-nowrap rounded bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
                         Upcoming
                       </span>
                     )}
@@ -288,9 +289,9 @@ export default function TenantDashboard() {
 
       {/* Recent Work Orders */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Recent Maintenance Requests</CardTitle>
-          <Link href="/portal/maintenance">
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
+          <CardTitle className="min-w-0 truncate">Recent Maintenance Requests</CardTitle>
+          <Link href="/portal/maintenance" className="shrink-0">
             <Button variant="ghost" className="text-sm">
               View All <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
@@ -305,16 +306,16 @@ export default function TenantDashboard() {
                 <Link
                   key={wo.id}
                   href={`/portal/maintenance/${wo.id}`}
-                  className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-gray-50"
+                  className="flex items-center justify-between gap-3 rounded-lg border p-3 transition-colors hover:bg-gray-50"
                 >
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{wo.title}</p>
-                    <p className="text-xs text-gray-500">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-gray-900">{wo.title}</p>
+                    <p className="truncate text-xs text-gray-500">
                       {new Date(wo.createdAt).toLocaleDateString()} · {wo.property.name}
                       {wo.unit ? ` Unit ${wo.unit.unitNumber}` : ''}
                     </p>
                   </div>
-                  <span className={cn('rounded px-2 py-0.5 text-xs font-medium', statusColors[wo.status] || 'bg-gray-100 text-gray-700')}>
+                  <span className={cn('shrink-0 whitespace-nowrap rounded px-2 py-0.5 text-xs font-medium', statusColors[wo.status] || 'bg-gray-100 text-gray-700')}>
                     {wo.status.replace(/_/g, ' ')}
                   </span>
                 </Link>

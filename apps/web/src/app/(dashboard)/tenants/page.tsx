@@ -5,6 +5,7 @@ import { useApi } from '@/hooks/use-api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
+import { PageHeader } from '@/components/ui/page-header';
 import { CreateLeaseForm } from '@/components/forms/create-lease-form';
 import { formatCents, cn } from '@/lib/utils';
 import {
@@ -45,18 +46,18 @@ export default function TenantsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Tenants</h1>
-          <p className="text-sm text-gray-500">
-            {tenants ? `${tenants.length} active tenants` : 'Loading...'}
-          </p>
-        </div>
-        <Button onClick={() => setShowCreate(true)} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          New Lease
-        </Button>
-      </div>
+      <PageHeader
+        title="Tenants"
+        description={
+          tenants ? `${tenants.length} active tenants` : 'Loading...'
+        }
+        actions={
+          <Button onClick={() => setShowCreate(true)} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            New Lease
+          </Button>
+        }
+      />
 
       <Modal
         open={showCreate}
@@ -117,18 +118,18 @@ export default function TenantsPage() {
                 key={tenant.id}
                 className="transition-shadow hover:shadow-md"
               >
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-purple-700 font-semibold text-lg">
+                <CardContent className="p-4 md:p-6">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-start gap-3 md:gap-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-purple-100 text-purple-700 font-semibold text-lg">
                         {tenant.name
                           .split(' ')
                           .map((n) => n[0])
                           .join('')
                           .toUpperCase()}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
                           <h3 className="font-semibold text-gray-900">
                             {tenant.name}
                           </h3>
@@ -139,14 +140,14 @@ export default function TenantsPage() {
                             </span>
                           )}
                         </div>
-                        <div className="mt-1 flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <Mail className="h-3.5 w-3.5" />
-                            {tenant.email}
+                        <div className="mt-1 flex flex-col gap-1 text-sm text-gray-500 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+                          <span className="flex min-w-0 items-center gap-1">
+                            <Mail className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">{tenant.email}</span>
                           </span>
                           {tenant.phone && (
                             <span className="flex items-center gap-1">
-                              <Phone className="h-3.5 w-3.5" />
+                              <Phone className="h-3.5 w-3.5 shrink-0" />
                               {tenant.phone}
                             </span>
                           )}
@@ -161,16 +162,16 @@ export default function TenantsPage() {
                         <Link
                           key={lease.id}
                           href={`/tenants/leases/${lease.id}`}
-                          className="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3 transition-colors hover:bg-gray-100"
+                          className="flex flex-col gap-3 rounded-lg bg-gray-50 px-3 py-3 transition-colors hover:bg-gray-100 sm:flex-row sm:items-center sm:justify-between sm:px-4"
                         >
-                          <div className="flex items-center gap-3">
-                            <Home className="h-4 w-4 text-gray-400" />
-                            <div>
-                              <p className="text-sm font-medium text-gray-700">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <Home className="h-4 w-4 shrink-0 text-gray-400" />
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium text-gray-700">
                                 {lease.propertyName} — Unit {lease.unitNumber}
                               </p>
                               <p className="text-xs text-gray-400 flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
+                                <Calendar className="h-3 w-3 shrink-0" />
                                 {new Date(
                                   lease.startDate,
                                 ).toLocaleDateString()}{' '}
@@ -179,8 +180,8 @@ export default function TenantsPage() {
                               </p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <div className="text-right">
+                          <div className="flex items-center justify-between gap-3 sm:justify-end">
+                            <div className="text-left sm:text-right">
                               <p className="text-sm font-semibold text-gray-900">
                                 {formatCents(lease.rentAmountCents)}/mo
                               </p>
@@ -200,7 +201,7 @@ export default function TenantsPage() {
                                 </p>
                               )}
                             </div>
-                            <FileText className="h-4 w-4 text-gray-300" />
+                            <FileText className="h-4 w-4 shrink-0 text-gray-300" />
                           </div>
                         </Link>
                       ))}

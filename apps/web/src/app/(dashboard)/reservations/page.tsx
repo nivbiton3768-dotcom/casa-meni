@@ -5,6 +5,7 @@ import { useApi } from '@/hooks/use-api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
+import { PageHeader } from '@/components/ui/page-header';
 import { AddReservationForm } from '@/components/forms/add-reservation-form';
 import { formatCents, cn } from '@/lib/utils';
 import {
@@ -64,20 +65,20 @@ export default function ReservationsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reservations</h1>
-          <p className="text-sm text-gray-500">
-            {reservations
-              ? `${reservations.length} reservations`
-              : 'Loading...'}
-          </p>
-        </div>
-        <Button onClick={() => setShowAdd(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Reservation
-        </Button>
-      </div>
+      <PageHeader
+        title="Reservations"
+        description={
+          reservations
+            ? `${reservations.length} reservations`
+            : 'Loading...'
+        }
+        actions={
+          <Button onClick={() => setShowAdd(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Reservation
+          </Button>
+        }
+      />
 
       {loading ? (
         <div className="space-y-3">
@@ -122,10 +123,10 @@ export default function ReservationsPage() {
                   isPast && 'opacity-70',
                 )}
               >
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
+                <CardContent className="p-4 md:p-5">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span
                           className={cn(
                             'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
@@ -154,22 +155,22 @@ export default function ReservationsPage() {
                         )}
                       </div>
 
-                      <h3 className="mt-2 font-semibold text-gray-900">
+                      <h3 className="mt-2 font-semibold text-gray-900 break-words">
                         {res.guestName}
                       </h3>
-                      <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <Mail className="h-3.5 w-3.5" />
-                          {res.guestEmail}
+                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
+                        <span className="flex min-w-0 items-center gap-1">
+                          <Mail className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">{res.guestEmail}</span>
                         </span>
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3.5 w-3.5" />
-                          {res.property.name}
+                        <span className="flex min-w-0 items-center gap-1">
+                          <MapPin className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">{res.property.name}</span>
                         </span>
                       </div>
                     </div>
 
-                    <div className="text-right">
+                    <div className="text-left md:text-right">
                       <p className="text-lg font-bold text-gray-900">
                         {formatCents(res.totalCents)}
                       </p>
@@ -180,7 +181,7 @@ export default function ReservationsPage() {
                     </div>
                   </div>
 
-                  <div className="mt-3 flex items-center gap-6 border-t pt-3 text-sm text-gray-500">
+                  <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 border-t pt-3 text-sm text-gray-500">
                     <div className="flex items-center gap-1">
                       <CalendarDays className="h-3.5 w-3.5" />
                       <span>
@@ -189,7 +190,7 @@ export default function ReservationsPage() {
                       </span>
                     </div>
                     {res.externalId && (
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-gray-400 break-all">
                         Ref: {res.externalId}
                       </span>
                     )}

@@ -12,6 +12,7 @@ import { Modal } from '@/components/ui/modal';
 import { apiFetch, cn } from '@/lib/utils';
 import { Plus, Wrench, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface WorkOrder {
   id: string;
@@ -78,19 +79,20 @@ export default function TenantMaintenancePage() {
   const closed = workOrders?.filter((w) => w.status === 'COMPLETED' || w.status === 'CANCELLED') || [];
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Maintenance Requests</h1>
-          <p className="text-sm text-gray-500">
-            Submit and track repair requests for your unit
-          </p>
-        </div>
-        <Button onClick={() => setShowForm(true)} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          New Request
-        </Button>
-      </div>
+    <div className="space-y-6 pb-6">
+      <PageHeader
+        title="Maintenance Requests"
+        description="Submit and track repair requests for your unit"
+        actions={
+          <Button
+            onClick={() => setShowForm(true)}
+            className="flex w-full items-center justify-center gap-2 md:w-auto"
+          >
+            <Plus className="h-4 w-4" />
+            New Request
+          </Button>
+        }
+      />
 
       {loading ? (
         <div className="space-y-3">
@@ -106,28 +108,28 @@ export default function TenantMaintenancePage() {
         <>
           {open.length > 0 && (
             <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-gray-900">Open ({open.length})</h2>
+              <h2 className="text-base font-semibold text-gray-900 md:text-lg">Open ({open.length})</h2>
               {open.map((wo) => (
-                <Link key={wo.id} href={`/portal/maintenance/${wo.id}`}>
+                <Link key={wo.id} href={`/portal/maintenance/${wo.id}`} className="block">
                   <Card className="transition-all hover:shadow-md cursor-pointer">
                     <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-start gap-3">
-                          <div className="rounded-lg bg-amber-50 p-2 mt-0.5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 items-start gap-3">
+                          <div className="mt-0.5 shrink-0 rounded-lg bg-amber-50 p-2">
                             <Wrench className="h-5 w-5 text-amber-600" />
                           </div>
-                          <div>
-                            <p className="font-medium text-gray-900">{wo.title}</p>
-                            <p className="text-sm text-gray-500 line-clamp-1">{wo.description}</p>
-                            <div className="mt-1 flex items-center gap-3 text-xs text-gray-400">
-                              <span>{new Date(wo.createdAt).toLocaleDateString()}</span>
-                              <span className={priorityColors[wo.priority]}>{wo.priority}</span>
-                              {wo.category && <span>{wo.category}</span>}
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-900 break-words">{wo.title}</p>
+                            <p className="text-sm text-gray-500 line-clamp-2">{wo.description}</p>
+                            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400">
+                              <span className="whitespace-nowrap">{new Date(wo.createdAt).toLocaleDateString()}</span>
+                              <span className={cn('whitespace-nowrap', priorityColors[wo.priority])}>{wo.priority}</span>
+                              {wo.category && <span className="whitespace-nowrap">{wo.category}</span>}
                               {wo.assignedTo && (
-                                <span className="text-blue-500">Assigned: {wo.assignedTo.name}</span>
+                                <span className="whitespace-nowrap text-blue-500">Assigned: {wo.assignedTo.name}</span>
                               )}
                               {wo.messages.length > 0 && (
-                                <span className="flex items-center gap-1">
+                                <span className="flex items-center gap-1 whitespace-nowrap">
                                   <MessageSquare className="h-3 w-3" />
                                   reply
                                 </span>
@@ -135,7 +137,7 @@ export default function TenantMaintenancePage() {
                             </div>
                           </div>
                         </div>
-                        <span className={cn('shrink-0 rounded px-2 py-0.5 text-xs font-medium', statusColors[wo.status])}>
+                        <span className={cn('shrink-0 whitespace-nowrap rounded px-2 py-0.5 text-xs font-medium', statusColors[wo.status])}>
                           {wo.status.replace(/_/g, ' ')}
                         </span>
                       </div>
@@ -148,20 +150,20 @@ export default function TenantMaintenancePage() {
 
           {closed.length > 0 && (
             <div className="space-y-3">
-              <h2 className="text-lg font-semibold text-gray-500">Resolved ({closed.length})</h2>
+              <h2 className="text-base font-semibold text-gray-500 md:text-lg">Resolved ({closed.length})</h2>
               {closed.map((wo) => (
-                <Link key={wo.id} href={`/portal/maintenance/${wo.id}`}>
+                <Link key={wo.id} href={`/portal/maintenance/${wo.id}`} className="block">
                   <Card className="opacity-60 transition-all hover:opacity-100 cursor-pointer">
                     <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium text-gray-700">{wo.title}</p>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-gray-700">{wo.title}</p>
                           <p className="text-xs text-gray-400">
                             {new Date(wo.createdAt).toLocaleDateString()}
                             {wo.completedAt && ` — Completed ${new Date(wo.completedAt).toLocaleDateString()}`}
                           </p>
                         </div>
-                        <span className={cn('rounded px-2 py-0.5 text-xs font-medium', statusColors[wo.status])}>
+                        <span className={cn('shrink-0 whitespace-nowrap rounded px-2 py-0.5 text-xs font-medium', statusColors[wo.status])}>
                           {wo.status}
                         </span>
                       </div>
@@ -174,11 +176,11 @@ export default function TenantMaintenancePage() {
 
           {(!workOrders || workOrders.length === 0) && (
             <Card>
-              <CardContent className="flex flex-col items-center py-12">
+              <CardContent className="flex flex-col items-center px-4 py-12 text-center">
                 <Wrench className="h-10 w-10 text-gray-300" />
                 <h3 className="mt-3 font-semibold text-gray-900">No requests yet</h3>
                 <p className="text-sm text-gray-500">Need something fixed? Submit a request.</p>
-                <Button onClick={() => setShowForm(true)} className="mt-4">
+                <Button onClick={() => setShowForm(true)} className="mt-4 w-full sm:w-auto">
                   Submit Request
                 </Button>
               </CardContent>
@@ -208,7 +210,7 @@ export default function TenantMaintenancePage() {
               required
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1">
               <label className="text-sm font-medium text-gray-700">Priority</label>
               <Select
@@ -239,11 +241,16 @@ export default function TenantMaintenancePage() {
               </Select>
             </div>
           </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>
+          <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:justify-end sm:gap-3">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setShowForm(false)}
+              className="w-full sm:w-auto"
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting}>
+            <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
               {submitting ? 'Submitting...' : 'Submit Request'}
             </Button>
           </div>

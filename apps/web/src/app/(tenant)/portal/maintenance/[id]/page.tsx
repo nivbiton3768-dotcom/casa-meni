@@ -68,7 +68,7 @@ export default function WorkOrderDetailPage() {
 
   if (loading || !order) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-4 pb-6">
         <div className="h-8 w-40 animate-pulse rounded bg-gray-100" />
         <Card>
           <CardContent className="p-6">
@@ -82,7 +82,7 @@ export default function WorkOrderDetailPage() {
   const isClosed = order.status === 'COMPLETED' || order.status === 'CANCELLED';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-6">
       <Link
         href="/portal/maintenance"
         className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900"
@@ -91,16 +91,16 @@ export default function WorkOrderDetailPage() {
         Back to Requests
       </Link>
 
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">{order.title}</h1>
-          <p className="text-sm text-gray-500">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold text-gray-900 break-words md:text-2xl">{order.title}</h1>
+          <p className="text-sm text-gray-500 break-words">
             {order.property.name}
             {order.unit ? ` — Unit ${order.unit.unitNumber}` : ''} ·{' '}
             Submitted {new Date(order.createdAt).toLocaleDateString()}
           </p>
         </div>
-        <span className={cn('rounded-lg px-3 py-1.5 text-sm font-medium', statusColors[order.status])}>
+        <span className={cn('shrink-0 self-start whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium', statusColors[order.status])}>
           {order.status.replace(/_/g, ' ')}
         </span>
       </div>
@@ -113,7 +113,7 @@ export default function WorkOrderDetailPage() {
               <CardTitle>Description</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="whitespace-pre-wrap text-sm text-gray-700">{order.description}</p>
+              <p className="whitespace-pre-wrap break-words text-sm text-gray-700">{order.description}</p>
             </CardContent>
           </Card>
 
@@ -133,7 +133,7 @@ export default function WorkOrderDetailPage() {
                   return (
                     <div
                       key={msg.id}
-                      className={cn('flex gap-3', isTenant && 'flex-row-reverse')}
+                      className={cn('flex gap-2 sm:gap-3', isTenant && 'flex-row-reverse')}
                     >
                       <div
                         className={cn(
@@ -145,19 +145,19 @@ export default function WorkOrderDetailPage() {
                       </div>
                       <div
                         className={cn(
-                          'max-w-[75%] rounded-xl px-4 py-2.5',
+                          'max-w-[80%] min-w-0 break-words rounded-xl px-3 py-2 sm:px-4 sm:py-2.5',
                           isTenant
                             ? 'bg-emerald-50 text-emerald-900'
                             : 'bg-gray-100 text-gray-900',
                         )}
                       >
-                        <p className="text-xs font-medium">
+                        <p className="text-xs font-medium break-words">
                           {msg.sender.name}{' '}
                           <span className="text-gray-400">
                             · {new Date(msg.createdAt).toLocaleString()}
                           </span>
                         </p>
-                        <p className="mt-1 text-sm">{msg.body}</p>
+                        <p className="mt-1 break-words text-sm">{msg.body}</p>
                       </div>
                     </div>
                   );
@@ -165,14 +165,21 @@ export default function WorkOrderDetailPage() {
               )}
 
               {!isClosed && (
-                <form onSubmit={handleSendMessage} className="mt-4 flex gap-2">
+                <form
+                  onSubmit={handleSendMessage}
+                  className="sticky bottom-0 z-10 -mx-6 -mb-6 mt-4 flex gap-2 border-t bg-white px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-6 lg:static lg:m-0 lg:border-0 lg:bg-transparent lg:p-0"
+                >
                   <Textarea
                     placeholder="Type a message..."
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    className="min-h-[60px]"
+                    className="min-h-[44px] text-base md:text-sm"
                   />
-                  <Button type="submit" disabled={sending || !message.trim()} className="shrink-0 self-end">
+                  <Button
+                    type="submit"
+                    disabled={sending || !message.trim()}
+                    className="h-11 shrink-0 self-end px-3"
+                  >
                     <Send className="h-4 w-4" />
                   </Button>
                 </form>
@@ -188,25 +195,25 @@ export default function WorkOrderDetailPage() {
               <CardTitle className="text-base">Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Priority</span>
+              <div className="flex justify-between gap-3 text-sm">
+                <span className="shrink-0 text-gray-500">Priority</span>
                 <span className="font-medium">{order.priority}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Category</span>
+              <div className="flex justify-between gap-3 text-sm">
+                <span className="shrink-0 text-gray-500">Category</span>
                 <span className="font-medium">{order.category || '—'}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Assigned To</span>
-                <span className="font-medium">{order.assignedTo?.name || 'Unassigned'}</span>
+              <div className="flex justify-between gap-3 text-sm">
+                <span className="shrink-0 text-gray-500">Assigned To</span>
+                <span className="min-w-0 break-words text-right font-medium">{order.assignedTo?.name || 'Unassigned'}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Submitted</span>
+              <div className="flex justify-between gap-3 text-sm">
+                <span className="shrink-0 text-gray-500">Submitted</span>
                 <span className="font-medium">{new Date(order.createdAt).toLocaleDateString()}</span>
               </div>
               {order.completedAt && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Completed</span>
+                <div className="flex justify-between gap-3 text-sm">
+                  <span className="shrink-0 text-gray-500">Completed</span>
                   <span className="font-medium">{new Date(order.completedAt).toLocaleDateString()}</span>
                 </div>
               )}

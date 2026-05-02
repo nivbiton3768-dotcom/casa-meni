@@ -2,6 +2,7 @@
 
 import { useApi } from '@/hooks/use-api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ResponsiveTable, ResponsiveColumn } from '@/components/ui/responsive-table';
 import { formatCents, cn } from '@/lib/utils';
 import {
   BarChart3,
@@ -122,10 +123,65 @@ export default function ReportsPage() {
 
   const occupancyColors = ['#10b981', '#f59e0b', '#ef4444', '#6366f1', '#8b5cf6', '#ec4899'];
 
+  const returnsColumns: ResponsiveColumn<InvestorReturn>[] = [
+    {
+      key: 'name',
+      header: 'Investor',
+      primary: true,
+      cell: (r) => <span className="font-medium text-gray-900">{r.name}</span>,
+    },
+    {
+      key: 'ownership',
+      header: <span className="block text-right">Ownership</span>,
+      mobileLabel: 'Ownership',
+      cell: (r) => (
+        <span className="block text-right text-gray-700">{r.ownershipPct.toFixed(1)}%</span>
+      ),
+    },
+    {
+      key: 'profitShare',
+      header: <span className="block text-right">Profit Share</span>,
+      mobileLabel: 'Profit Share',
+      cell: (r) => (
+        <span
+          className={cn(
+            'block text-right font-medium',
+            r.profitShareCents >= 0 ? 'text-green-600' : 'text-red-600',
+          )}
+        >
+          {formatCents(r.profitShareCents)}
+        </span>
+      ),
+    },
+    {
+      key: 'distributed',
+      header: <span className="block text-right">Distributed</span>,
+      mobileLabel: 'Distributed',
+      cell: (r) => (
+        <span className="block text-right text-gray-700">{formatCents(r.totalDistributedCents)}</span>
+      ),
+    },
+    {
+      key: 'undistributed',
+      header: <span className="block text-right">Undistributed</span>,
+      mobileLabel: 'Undistributed',
+      cell: (r) => (
+        <span
+          className={cn(
+            'block text-right font-medium',
+            r.undistributedCents > 0 ? 'text-amber-600' : 'text-gray-500',
+          )}
+        >
+          {formatCents(r.undistributedCents)}
+        </span>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
+        <h1 className="text-xl font-bold text-gray-900 md:text-2xl">Reports & Analytics</h1>
         <p className="text-sm text-gray-500">Financial performance, occupancy, and portfolio insights</p>
       </div>
 
@@ -144,7 +200,7 @@ export default function ReportsPage() {
             <p className="py-12 text-center text-sm text-gray-500">No transaction data yet.</p>
           ) : (
             <>
-              <div className="mb-4 grid grid-cols-3 gap-4">
+              <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
                 {(() => {
                   const totals = pnl!.reduce(
                     (acc, m) => ({
@@ -189,7 +245,7 @@ export default function ReportsPage() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Section 2: Occupancy Rates */}
         <Card>
           <CardHeader>
@@ -273,7 +329,7 @@ export default function ReportsPage() {
               <p className="py-8 text-center text-sm text-gray-500">No data</p>
             ) : (
               <>
-                <div className="mb-4 grid grid-cols-3 gap-3">
+                <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div className="flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2">
                     <CheckCircle2 className="h-4 w-4 text-green-600" />
                     <div>
@@ -330,12 +386,12 @@ export default function ReportsPage() {
             <div className="space-y-6">
               {renovations.map((reno) => (
                 <div key={reno.id} className="rounded-lg border border-gray-100 p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <h4 className="font-semibold text-gray-900">{reno.name}</h4>
+                  <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <h4 className="font-semibold text-gray-900 break-words">{reno.name}</h4>
                       <p className="text-xs text-gray-500">{reno.propertyName} — {reno.status.replace('_', ' ')}</p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left sm:text-right">
                       <p className="text-sm font-bold text-gray-900">
                         {formatCents(reno.actualCostCents)} / {formatCents(reno.budgetCents)}
                       </p>
@@ -403,34 +459,11 @@ export default function ReportsPage() {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="overflow-hidden rounded-lg border border-gray-200">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-2.5 text-left font-medium text-gray-500">Investor</th>
-                      <th className="px-4 py-2.5 text-right font-medium text-gray-500">Ownership</th>
-                      <th className="px-4 py-2.5 text-right font-medium text-gray-500">Profit Share</th>
-                      <th className="px-4 py-2.5 text-right font-medium text-gray-500">Distributed</th>
-                      <th className="px-4 py-2.5 text-right font-medium text-gray-500">Undistributed</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {returns.map((r) => (
-                      <tr key={r.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-2.5 font-medium text-gray-900">{r.name}</td>
-                        <td className="px-4 py-2.5 text-right text-gray-700">{r.ownershipPct.toFixed(1)}%</td>
-                        <td className={cn('px-4 py-2.5 text-right font-medium', r.profitShareCents >= 0 ? 'text-green-600' : 'text-red-600')}>
-                          {formatCents(r.profitShareCents)}
-                        </td>
-                        <td className="px-4 py-2.5 text-right text-gray-700">{formatCents(r.totalDistributedCents)}</td>
-                        <td className={cn('px-4 py-2.5 text-right font-medium', r.undistributedCents > 0 ? 'text-amber-600' : 'text-gray-500')}>
-                          {formatCents(r.undistributedCents)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <ResponsiveTable<InvestorReturn>
+                rows={returns}
+                rowKey={(r) => r.id}
+                columns={returnsColumns}
+              />
             </>
           )}
         </CardContent>
