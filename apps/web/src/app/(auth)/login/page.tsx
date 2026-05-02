@@ -22,12 +22,15 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await apiFetch<{ data: { accessToken: string } }>('/auth/login', {
+      const res = await apiFetch<{
+        data: { accessToken: string; user: { role: string } };
+      }>('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
       localStorage.setItem('token', res.data.accessToken);
-      router.push('/dashboard');
+      const dest = res.data.user.role === 'TENANT' ? '/portal' : '/dashboard';
+      router.push(dest);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
