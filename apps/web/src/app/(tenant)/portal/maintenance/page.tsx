@@ -190,46 +190,54 @@ export default function TenantMaintenancePage() {
       {/* New Request Modal */}
       <Modal open={showForm} onClose={() => setShowForm(false)} title="New Maintenance Request" size="md">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="What's the issue?"
-            placeholder="e.g. Leaking faucet in kitchen"
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-            required
-          />
-          <Textarea
-            label="Describe the problem"
-            placeholder="Please include as much detail as possible..."
-            value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            required
-          />
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">What&apos;s the issue?</label>
+            <Input
+              placeholder="e.g. Leaking faucet in kitchen"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              required
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-gray-700">Describe the problem</label>
+            <Textarea
+              placeholder="Please include as much detail as possible..."
+              value={form.description}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              required
+            />
+          </div>
           <div className="grid grid-cols-2 gap-4">
-            <Select
-              label="Priority"
-              value={form.priority}
-              onChange={(e) => setForm({ ...form, priority: e.target.value })}
-            >
-              <option value="LOW">Low — can wait</option>
-              <option value="MEDIUM">Medium — needs attention</option>
-              <option value="HIGH">High — affecting daily life</option>
-              <option value="URGENT">Urgent — emergency</option>
-            </Select>
-            <Select
-              label="Category"
-              value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
-            >
-              <option value="GENERAL">General</option>
-              <option value="PLUMBING">Plumbing</option>
-              <option value="ELECTRICAL">Electrical</option>
-              <option value="HVAC">HVAC</option>
-              <option value="APPLIANCE">Appliance</option>
-              <option value="PEST_CONTROL">Pest Control</option>
-              <option value="STRUCTURAL">Structural</option>
-              <option value="EXTERIOR">Exterior</option>
-              <option value="OTHER">Other</option>
-            </Select>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">Priority</label>
+              <Select
+                value={form.priority}
+                onChange={(e) => setForm({ ...form, priority: e.target.value })}
+              >
+                <option value="LOW">Low — can wait</option>
+                <option value="MEDIUM">Medium — needs attention</option>
+                <option value="HIGH">High — affecting daily life</option>
+                <option value="URGENT">Urgent — emergency</option>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-gray-700">Category</label>
+              <Select
+                value={form.category}
+                onChange={(e) => setForm({ ...form, category: e.target.value })}
+              >
+                <option value="GENERAL">General</option>
+                <option value="PLUMBING">Plumbing</option>
+                <option value="ELECTRICAL">Electrical</option>
+                <option value="HVAC">HVAC</option>
+                <option value="APPLIANCE">Appliance</option>
+                <option value="PEST_CONTROL">Pest Control</option>
+                <option value="STRUCTURAL">Structural</option>
+                <option value="EXTERIOR">Exterior</option>
+                <option value="OTHER">Other</option>
+              </Select>
+            </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="secondary" onClick={() => setShowForm(false)}>
