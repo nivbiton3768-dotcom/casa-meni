@@ -57,17 +57,52 @@ export class PlaidService {
     if (!this.client) {
       throw new Error('Plaid is not configured');
     }
-    const res = await this.client.linkTokenCreate({
-      user: { client_user_id: args.userId },
-      client_name: args.organizationName.slice(0, 30),
-      products: [Products.Transactions],
-      country_codes: [CountryCode.Us],
-      language: 'en',
-    });
-    return {
-      linkToken: res.data.link_token,
-      expiration: res.data.expiration,
+    try {
+      const res = await this.client.linkTokenCreate({
+        user: { client_user_id: args.userId },
+        client_name: args.organizationName.slice(0, 30),
+        products: [Products.Transactions],
+        country_codes: [CountryCode.Us],
+        language: 'en',
+      });
+      return {
+        linkToken: res.data.link_token,
+        expiration: res.data.expiration,
+      };
+    } catch (err) {
+      throw this.wrapPlaidError(err, 'createLinkToken');
+    }
+  }
+
+  /**
+   * Pull a Plaid axios error apart so the actual error_code / error_message
+   * makes it into the server logs (and the response, if appropriate).
+   */
+  private wrapPlaidError(err: unknown, op: string): Error {
+    type PlaidApiError = {
+      response?: {
+        status?: number;
+        data?: {
+          error_type?: string;
+          error_code?: string;
+          error_message?: string;
+          display_message?: string;
+          request_id?: string;
+        };
+      };
+      message?: string;
     };
+    const e = err as PlaidApiError;
+    const data = e?.response?.data;
+    const status = e?.response?.status;
+    const summary = data
+      ? `${data.error_type ?? '?'}/${data.error_code ?? '?'}: ${data.error_message ?? data.display_message ?? '(no message)'} (request_id=${data.request_id ?? '-'})`
+      : (e?.message ?? String(err));
+    this.logger.error(`Plaid ${op} failed [${status ?? '?'}]: ${summary}`);
+    const msg = data?.error_message
+      ? `Plaid ${op} failed: ${data.error_code} — ${data.error_message}`
+      : `Plaid ${op} failed: ${summary}`;
+    return new Error(msg);
   }
 
   /**
@@ -78,13 +113,17 @@ export class PlaidService {
     itemId: string;
   }> {
     if (!this.client) throw new Error('Plaid is not configured');
-    const res = await this.client.itemPublicTokenExchange({
-      public_token: publicToken,
-    });
-    return {
-      accessToken: res.data.access_token,
-      itemId: res.data.item_id,
-    };
+    try {
+      const res = await this.client.itemPublicTokenExchange({
+        public_token: publicToken,
+      });
+      return {
+        accessToken: res.data.access_token,
+        itemId: res.data.item_id,
+      };
+    } catch (err) {
+      throw this.wrapPlaidError(err, 'exchangePublicToken');
+    }
   }
 
   /**
@@ -92,8 +131,12 @@ export class PlaidService {
    */
   async getAccounts(accessToken: string) {
     if (!this.client) throw new Error('Plaid is not configured');
-    const res = await this.client.accountsGet({ access_token: accessToken });
-    return res.data.accounts;
+    try {
+      const res = await this.client.accountsGet({ access_token: accessToken });
+      return res.data.accounts;
+    } catch (err) {
+      throw this.wrapPlaidError(err, 'getAccounts');
+    }
   }
 
   /**

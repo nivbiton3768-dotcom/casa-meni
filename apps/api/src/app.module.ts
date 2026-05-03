@@ -49,6 +49,7 @@ import { CostAnalyticsModule } from './cost-analytics/cost-analytics.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { SecurityModule } from './security/rls.service';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { SecurityModule } from './security/rls.service';
     WebhooksModule,
     AIModule,
     AuthModule,
+    UsersModule,
     PropertiesModule,
     UnitsModule,
     LeasesModule,

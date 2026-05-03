@@ -1,4 +1,5 @@
 import {
+  BadGatewayException,
   BadRequestException,
   Injectable,
   Logger,
@@ -92,10 +93,16 @@ export class BankingService implements OnModuleInit {
       where: { id: organizationId },
     });
     if (!org) throw new NotFoundException('Organization not found');
-    return this.plaid.createLinkToken({
-      userId,
-      organizationName: org.name,
-    });
+    try {
+      return await this.plaid.createLinkToken({
+        userId,
+        organizationName: org.name,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.error(`createLinkToken failed: ${msg}`);
+      throw new BadGatewayException(msg);
+    }
   }
 
   async exchangePublicToken(organizationId: string, publicToken: string) {
