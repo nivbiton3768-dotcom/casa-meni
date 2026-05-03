@@ -96,9 +96,10 @@ export default function TrustPage() {
             <tbody>
               {deposits?.map((d) => (
                 <tr key={d.id} className="border-b">
-                  <td className="py-2">{d.lease.tenant.name}</td>
+                  <td className="py-2">{d.lease?.tenant?.name ?? '—'}</td>
                   <td>
-                    {d.lease.unit.property.name} #{d.lease.unit.unitNumber}
+                    {d.lease?.unit?.property?.name ?? '—'}
+                    {d.lease?.unit?.unitNumber ? ` #${d.lease.unit.unitNumber}` : ''}
                   </td>
                   <td>{new Date(d.receivedAt).toLocaleDateString()}</td>
                   <td>

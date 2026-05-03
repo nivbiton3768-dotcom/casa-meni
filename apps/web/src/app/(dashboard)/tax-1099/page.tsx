@@ -89,14 +89,14 @@ export default function Tax1099Page() {
             </thead>
             <tbody>
               {data?.map((r) => (
-                <tr key={r.vendor.id} className="border-b">
-                  <td className="py-2 font-medium">{r.vendor.name}</td>
+                <tr key={r.vendor?.id ?? Math.random()} className="border-b">
+                  <td className="py-2 font-medium">{r.vendor?.name ?? '—'}</td>
                   <td className="text-xs">
-                    {r.vendor.taxId ? `***-**-${r.vendor.taxId.slice(-4)}` : (
+                    {r.vendor?.taxId ? `***-**-${r.vendor.taxId.slice(-4)}` : (
                       <span className="text-red-600">Missing</span>
                     )}
                   </td>
-                  <td>{r.vendor.is1099Required ? 'Yes' : 'No'}</td>
+                  <td>{r.vendor?.is1099Required ? 'Yes' : 'No'}</td>
                   <td className="text-right font-bold">
                     ${(r.totalCents / 100).toLocaleString()}
                   </td>
@@ -110,7 +110,7 @@ export default function Tax1099Page() {
                     )}
                   </td>
                   <td>
-                    {r.reportable && (
+                    {r.reportable && r.vendor?.id && (
                       <Button
                         size="sm"
                         variant="ghost"

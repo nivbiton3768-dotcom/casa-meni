@@ -19,8 +19,10 @@ interface Tenant {
 interface Lease {
   id: string;
   tenant: { id: string; name: string; email: string };
-  unit: { unitNumber: string };
-  property: { id: string; name: string };
+  unit: {
+    unitNumber: string;
+    property: { id: string; name: string };
+  };
 }
 
 interface Property {
@@ -123,9 +125,10 @@ export function SendForSignatureForm({
           },
         ]);
       }
-      setPropertyId(l.property.id);
+      if (l.unit?.property?.id) setPropertyId(l.unit.property.id);
       if (!title) {
-        setTitle(`Lease — ${l.tenant.name} — ${l.property.name} ${l.unit.unitNumber}`);
+        const propName = l.unit?.property?.name ?? '';
+        setTitle(`Lease — ${l.tenant.name} — ${propName} ${l.unit?.unitNumber ?? ''}`.trim());
       }
     }
   };
@@ -236,7 +239,8 @@ export function SendForSignatureForm({
             <option value="">None</option>
             {leases?.map((l) => (
               <option key={l.id} value={l.id}>
-                {l.tenant.name} — {l.property.name} {l.unit.unitNumber}
+                {l.tenant?.name ?? 'Tenant'} — {l.unit?.property?.name ?? 'Property'}{' '}
+                {l.unit?.unitNumber ?? ''}
               </option>
             ))}
           </Select>

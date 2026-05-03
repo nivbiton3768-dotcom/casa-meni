@@ -16,8 +16,7 @@ interface Property {
 interface Lease {
   id: string;
   tenant: { name: string };
-  unit: { unitNumber: string };
-  property: { name: string };
+  unit: { unitNumber: string; property: { name: string } };
 }
 
 interface AddDocumentFormProps {
@@ -103,7 +102,8 @@ export function AddDocumentForm({ onSuccess, onCancel }: AddDocumentFormProps) {
             <option value="">None</option>
             {leases?.map((l) => (
               <option key={l.id} value={l.id}>
-                {l.tenant.name} — {l.property.name} {l.unit.unitNumber}
+                {l.tenant?.name ?? 'Tenant'} — {l.unit?.property?.name ?? 'Property'}{' '}
+                {l.unit?.unitNumber ?? ''}
               </option>
             ))}
           </Select>

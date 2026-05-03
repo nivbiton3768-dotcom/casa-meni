@@ -106,12 +106,12 @@ export default function CapitalCallsPage() {
                 </div>
               </div>
               <div className="space-y-1">
-                {c.commitments.map((cm) => (
+                {(c.commitments ?? []).map((cm) => (
                   <div
                     key={cm.id}
                     className="flex items-center justify-between text-sm border-t pt-2"
                   >
-                    <div>{cm.investor.name}</div>
+                    <div>{cm.investor?.name ?? '—'}</div>
                     <div>${(cm.amountCents / 100).toLocaleString()}</div>
                     <span
                       className={`rounded px-2 py-0.5 text-xs ${cm.status === 'FUNDED' ? 'bg-emerald-100 text-emerald-700' : cm.status === 'COMMITTED' ? 'bg-blue-100 text-blue-700' : cm.status === 'DECLINED' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'}`}
