@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useApi } from '@/hooks/use-api';
+import { useProperties } from '@/hooks/use-properties';
 import { apiFetch } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,11 +25,6 @@ interface Asset {
   propertyId: string;
 }
 
-interface Property {
-  id: string;
-  name: string;
-}
-
 const TYPES = [
   'HVAC',
   'WATER_HEATER',
@@ -48,7 +44,7 @@ const TYPES = [
 export default function AssetsPage() {
   const { data: assets, refetch } = useApi<Asset[]>('/assets');
   const { data: warnings } = useApi<Asset[]>('/assets/warranty-alerts');
-  const { data: properties } = useApi<Property[]>('/properties');
+  const { properties } = useProperties();
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<{
@@ -153,7 +149,7 @@ export default function AssetsPage() {
             onChange={(e) => setForm({ ...form, propertyId: e.target.value })}
           >
             <option value="">Select property…</option>
-            {properties?.map((p) => (
+            {properties.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
               </option>

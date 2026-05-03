@@ -2,6 +2,7 @@
 
 import { useState, FormEvent, ChangeEvent } from 'react';
 import { useApi } from '@/hooks/use-api';
+import { useProperties } from '@/hooks/use-properties';
 import { apiFetch } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,11 +26,6 @@ interface Lease {
   };
 }
 
-interface Property {
-  id: string;
-  name: string;
-}
-
 interface Signer {
   name: string;
   email: string;
@@ -50,7 +46,7 @@ export function SendForSignatureForm({
   const { success, error: showError } = useToast();
   const { data: tenants } = useApi<Tenant[]>('/leases/tenants');
   const { data: leases } = useApi<Lease[]>('/leases');
-  const { data: properties } = useApi<Property[]>('/properties');
+  const { properties } = useProperties();
 
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState(
@@ -254,7 +250,7 @@ export function SendForSignatureForm({
             onChange={(e) => setPropertyId(e.target.value)}
           >
             <option value="">None</option>
-            {properties?.map((p) => (
+            {properties.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
               </option>

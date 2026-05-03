@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useApi } from '@/hooks/use-api';
+import { useProperties } from '@/hooks/use-properties';
 import { apiFetch } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,11 +23,6 @@ import {
 } from 'lucide-react';
 
 type Provider = 'AIRBNB' | 'VRBO' | 'BOOKING' | 'OTHER';
-
-interface Property {
-  id: string;
-  name: string;
-}
 
 interface ChannelFeed {
   id: string;
@@ -58,7 +54,7 @@ const providerColors: Record<Provider, string> = {
 export default function ChannelsPage() {
   const { data: feeds, loading, refetch } =
     useApi<ChannelFeed[]>('/channels/feeds');
-  const { data: properties } = useApi<Property[]>('/properties');
+  const { properties } = useProperties();
   const [showAdd, setShowAdd] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const toast = useToast();
@@ -310,7 +306,7 @@ export default function ChannelsPage() {
 }
 
 interface AddChannelFormProps {
-  properties: Property[];
+  properties: { id: string; name: string }[];
   onSuccess: () => void;
   onCancel: () => void;
 }

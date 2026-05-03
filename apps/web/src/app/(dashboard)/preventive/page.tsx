@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useApi } from '@/hooks/use-api';
+import { useProperties } from '@/hooks/use-properties';
 import { apiFetch } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,14 +24,9 @@ interface Task {
   isActive: boolean;
 }
 
-interface Property {
-  id: string;
-  name: string;
-}
-
 export default function PreventivePage() {
   const { data: tasks, refetch } = useApi<Task[]>('/preventive');
-  const { data: properties } = useApi<Property[]>('/properties');
+  const { properties } = useProperties();
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -111,7 +107,7 @@ export default function PreventivePage() {
             onChange={(e) => setForm({ ...form, propertyId: e.target.value })}
           >
             <option value="">All properties</option>
-            {properties?.map((p) => (
+            {properties.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
               </option>

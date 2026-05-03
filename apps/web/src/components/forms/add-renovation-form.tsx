@@ -1,19 +1,13 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { useApi } from '@/hooks/use-api';
+import { useProperties } from '@/hooks/use-properties';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/toast';
 import { apiFetch } from '@/lib/utils';
-
-interface Property {
-  id: string;
-  name: string;
-  address: string;
-}
 
 interface AddRenovationFormProps {
   onSuccess: () => void;
@@ -22,7 +16,7 @@ interface AddRenovationFormProps {
 
 export function AddRenovationForm({ onSuccess, onCancel }: AddRenovationFormProps) {
   const { success, error: showError } = useToast();
-  const { data: properties } = useApi<Property[]>('/properties');
+  const { properties } = useProperties();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     propertyId: '',
@@ -66,7 +60,7 @@ export function AddRenovationForm({ onSuccess, onCancel }: AddRenovationFormProp
         <label className="mb-1 block text-sm font-medium text-gray-700">Property *</label>
         <Select value={form.propertyId} onChange={(e) => update('propertyId', e.target.value)} required>
           <option value="">Select property...</option>
-          {properties?.map((p) => (
+          {properties.map((p) => (
             <option key={p.id} value={p.id}>{p.name} — {p.address}</option>
           ))}
         </Select>

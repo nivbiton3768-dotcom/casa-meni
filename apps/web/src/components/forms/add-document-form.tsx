@@ -2,16 +2,12 @@
 
 import { useState, FormEvent } from 'react';
 import { useApi } from '@/hooks/use-api';
+import { useProperties } from '@/hooks/use-properties';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { useToast } from '@/components/ui/toast';
 import { apiFetch } from '@/lib/utils';
-
-interface Property {
-  id: string;
-  name: string;
-}
 
 interface Lease {
   id: string;
@@ -35,7 +31,7 @@ const MIME_TYPES = [
 
 export function AddDocumentForm({ onSuccess, onCancel }: AddDocumentFormProps) {
   const { success, error: showError } = useToast();
-  const { data: properties } = useApi<Property[]>('/properties');
+  const { properties } = useProperties();
   const { data: leases } = useApi<Lease[]>('/leases');
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -91,7 +87,7 @@ export function AddDocumentForm({ onSuccess, onCancel }: AddDocumentFormProps) {
           <label className="mb-1 block text-sm font-medium text-gray-700">Property</label>
           <Select value={form.propertyId} onChange={(e) => update('propertyId', e.target.value)}>
             <option value="">None</option>
-            {properties?.map((p) => (
+            {properties.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </Select>

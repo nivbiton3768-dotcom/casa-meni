@@ -15,6 +15,10 @@ interface Property {
   units: { id: string; unitNumber: string }[];
 }
 
+interface PropertiesResponse {
+  properties: Property[];
+}
+
 interface AddReservationFormProps {
   onSuccess: () => void;
   onCancel: () => void;
@@ -29,7 +33,10 @@ const CHANNELS = [
 
 export function AddReservationForm({ onSuccess, onCancel }: AddReservationFormProps) {
   const { success, error: showError } = useToast();
-  const { data: properties } = useApi<Property[]>('/properties');
+  const { data: propertiesResp } = useApi<PropertiesResponse>(
+    '/properties?pageSize=500',
+  );
+  const properties = propertiesResp?.properties ?? [];
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     propertyId: '',
@@ -46,7 +53,7 @@ export function AddReservationForm({ onSuccess, onCancel }: AddReservationFormPr
     notes: '',
   });
 
-  const selectedProperty = properties?.find((p) => p.id === form.propertyId);
+  const selectedProperty = properties.find((p) => p.id === form.propertyId);
 
   const update = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -94,7 +101,7 @@ export function AddReservationForm({ onSuccess, onCancel }: AddReservationFormPr
           <label className="mb-1 block text-sm font-medium text-gray-700">Property *</label>
           <Select value={form.propertyId} onChange={(e) => handlePropertyChange(e.target.value)} required>
             <option value="">Select property...</option>
-            {properties?.map((p) => (
+            {properties.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </Select>
