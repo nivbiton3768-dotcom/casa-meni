@@ -139,14 +139,16 @@ export class BankingService implements OnModuleInit {
       created.push({ id: ba.id, name: ba.name });
     }
 
-    // Pull initial transactions
+    // Pull initial transactions. On a freshly-linked production item Plaid
+    // often has no transactions ready yet (returns 0), so we also schedule
+    // delayed re-syncs and rely on the Plaid webhook for the rest.
     let added = 0;
     let autoMatched = 0;
-    if (created.length > 0) {
-      const sync = await this.syncByItem(organizationId, itemId);
-      added = sync.added;
-      autoMatched = sync.autoMatched;
-    }
+    const sync = await this.syncByItem(organizationId, itemId);
+    added = sync.added;
+    autoMatched = sync.autoMatched;
+
+    this.schedulePostLinkSyncs(organizationId, itemId);
 
     return {
       accountsCreated: created.length,
@@ -154,6 +156,87 @@ export class BankingService implements OnModuleInit {
       transactionsAdded: added,
       transactionsAutoMatched: autoMatched,
     };
+  }
+
+  /**
+   * Plaid does not have transaction history ready the instant an item is
+   * linked. Re-sync a few times over the next few minutes so the user sees
+   * their transactions without having to click "Sync now". The Plaid webhook
+   * (SYNC_UPDATES_AVAILABLE) is the durable mechanism; these timers just give
+   * a good first-time experience while the process is alive.
+   */
+  private schedulePostLinkSyncs(organizationId: string, itemId: string) {
+    const delaysMs = [15_000, 60_000, 180_000];
+    for (const delay of delaysMs) {
+      setTimeout(() => {
+        this.syncByItem(organizationId, itemId)
+          .then((r) => {
+            if (r.added > 0) {
+              this.logger.log(
+                `Post-link re-sync (+${Math.round(delay / 1000)}s) added ${r.added} txns for item ${itemId}`,
+              );
+            }
+          })
+          .catch((err) =>
+            this.logger.warn(
+              `Post-link re-sync failed for item ${itemId}: ${err instanceof Error ? err.message : err}`,
+            ),
+          );
+      }, delay).unref?.();
+    }
+  }
+
+  /**
+   * Sync a Plaid item without knowing the org up front (used by the webhook).
+   * Resolves the owning organization from the stored bank account.
+   */
+  /**
+   * Register/refresh the Plaid transaction webhook on every active Plaid item
+   * in this org. Useful for items that were linked before a webhook URL was
+   * configured. Also kicks a sync so any pending transactions land now.
+   */
+  async registerWebhooks(organizationId: string) {
+    if (!this.plaid.enabled) {
+      throw new BadRequestException('Bank syncing is not enabled.');
+    }
+    if (!this.plaid.hasWebhook) {
+      throw new BadRequestException(
+        'No webhook URL configured. Set PUBLIC_API_URL on the API service.',
+      );
+    }
+    const items = await this.prisma.bankAccount.findMany({
+      where: {
+        organizationId,
+        provider: BankAccountProvider.PLAID,
+        isActive: true,
+        plaidAccessToken: { not: null },
+      },
+      select: { plaidItemId: true, plaidAccessToken: true },
+      distinct: ['plaidItemId'],
+    });
+
+    let updated = 0;
+    let added = 0;
+    for (const item of items) {
+      if (!item.plaidAccessToken || !item.plaidItemId) continue;
+      const ok = await this.plaid.updateItemWebhook(item.plaidAccessToken);
+      if (ok) updated += 1;
+      const r = await this.syncByItem(organizationId, item.plaidItemId);
+      added += r.added;
+    }
+    return { itemsUpdated: updated, transactionsAdded: added };
+  }
+
+  async syncByPlaidItem(itemId: string) {
+    const account = await this.prisma.bankAccount.findFirst({
+      where: { plaidItemId: itemId, provider: BankAccountProvider.PLAID },
+      select: { organizationId: true },
+    });
+    if (!account) {
+      this.logger.warn(`Webhook for unknown Plaid item ${itemId} — ignoring`);
+      return { added: 0, modified: 0, removed: 0, autoMatched: 0 };
+    }
+    return this.syncByItem(account.organizationId, itemId);
   }
 
   private mapPlaidType(type: string, subtype: string | null) {

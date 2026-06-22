@@ -15,12 +15,22 @@ export class PlaidService {
   private readonly logger = new Logger(PlaidService.name);
   private readonly client: PlaidApi | null;
   public readonly enabled: boolean;
+  private readonly webhookUrl: string | null;
 
   constructor(private readonly config: ConfigService) {
     const clientId = this.config.get<string>('PLAID_CLIENT_ID');
     const secret = this.config.get<string>('PLAID_SECRET');
     const env = (this.config.get<string>('PLAID_ENV') ?? 'sandbox').toLowerCase();
     this.enabled = Boolean(clientId && secret);
+
+    // Public URL Plaid will POST transaction-update webhooks to. Must be
+    // reachable from the internet (e.g. https://casameni-api.onrender.com/api/v1).
+    const publicApiUrl = this.config
+      .get<string>('PUBLIC_API_URL')
+      ?.replace(/\/$/, '');
+    this.webhookUrl = publicApiUrl
+      ? `${publicApiUrl}/banking/plaid/webhook`
+      : null;
 
     if (this.enabled) {
       const basePath =
@@ -38,7 +48,9 @@ export class PlaidService {
         },
       });
       this.client = new PlaidApi(configuration);
-      this.logger.log(`Plaid service ready (env=${env})`);
+      this.logger.log(
+        `Plaid service ready (env=${env}${this.webhookUrl ? `, webhook=${this.webhookUrl}` : ', no webhook'})`,
+      );
     } else {
       this.client = null;
       this.logger.warn(
@@ -64,6 +76,7 @@ export class PlaidService {
         products: [Products.Transactions],
         country_codes: [CountryCode.Us],
         language: 'en',
+        ...(this.webhookUrl ? { webhook: this.webhookUrl } : {}),
       });
       return {
         linkToken: res.data.link_token,
@@ -176,6 +189,31 @@ export class PlaidService {
     }
 
     return { added, modified, removed, nextCursor, hasMore };
+  }
+
+  /** Whether a webhook URL is configured for this deployment. */
+  get hasWebhook(): boolean {
+    return Boolean(this.webhookUrl);
+  }
+
+  /**
+   * Register/refresh the transaction webhook on an existing item. Items linked
+   * before a webhook URL was configured won't push updates until this runs.
+   */
+  async updateItemWebhook(accessToken: string): Promise<boolean> {
+    if (!this.client || !this.webhookUrl) return false;
+    try {
+      await this.client.itemWebhookUpdate({
+        access_token: accessToken,
+        webhook: this.webhookUrl,
+      });
+      return true;
+    } catch (err) {
+      this.logger.warn(
+        `Failed to update item webhook: ${err instanceof Error ? err.message : err}`,
+      );
+      return false;
+    }
   }
 
   /**

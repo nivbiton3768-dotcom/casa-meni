@@ -58,6 +58,11 @@ export class BankingController {
     return this.service.syncAll(organizationId);
   }
 
+  @Post('register-webhooks')
+  registerWebhooks(@CurrentUser('organizationId') organizationId: string) {
+    return this.service.registerWebhooks(organizationId);
+  }
+
   @Get('accounts')
   listAccounts(@CurrentUser('organizationId') organizationId: string) {
     return this.service.listAccounts(organizationId);
