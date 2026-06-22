@@ -469,15 +469,22 @@ export default function BankingPage() {
                           <ArrowUpCircle className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
                         )}
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-gray-900">
-                            {t.merchantName || t.counterpartyName || t.description}
+                          <p className="text-sm font-medium text-gray-900">
+                            {t.counterpartyName || t.merchantName || t.description}
                           </p>
-                          <p className="truncate text-xs text-gray-500">
+                          <p className="text-xs text-gray-500">
                             {t.bankAccount.name}
                             {' · '}
                             {new Date(t.date).toLocaleDateString()}
                             {t.category ? ` · ${t.category.toLowerCase().replace(/_/g, ' ')}` : ''}
                           </p>
+                          {t.description &&
+                            t.description !==
+                              (t.counterpartyName || t.merchantName) && (
+                              <p className="mt-1 break-words font-mono text-[11px] leading-snug text-gray-400">
+                                {t.description}
+                              </p>
+                            )}
                         </div>
                       </div>
 

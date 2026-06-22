@@ -54,6 +54,75 @@ export class TransactionMatcherService {
   private readonly logger = new Logger(TransactionMatcherService.name);
 
   /**
+   * Extract the real human/business counterparty from a bank memo.
+   *
+   * Bank feeds (esp. Zelle/Venmo/Cash App via the bank) bury the actual
+   * sender in the description while Plaid's structured counterparty is just
+   * the payment app ("Zelle"). e.g.
+   *   "TD ZELLE RECEIVED 615600N0EGYM Zelle KAREN EDWARDS" -> "Karen Edwards"
+   *   "ZELLE PAYMENT FROM JOHN DOE 12345"                  -> "John Doe"
+   *   "VENMO CASHOUT"                                       -> falls back
+   *
+   * Falls back to a provided structured counterparty / merchant name when no
+   * person can be parsed.
+   */
+  extractCounterparty(
+    description: string | null | undefined,
+    fallback?: string | null,
+  ): string | null {
+    const desc = (description ?? '').trim();
+    if (!desc) return this.titleCase(fallback) ?? null;
+
+    const isNoise = (s: string) =>
+      !s ||
+      s.trim().length < 3 ||
+      !/[a-z]{2,}/i.test(s) ||
+      /^(zelle|venmo|cash\s*app|cashapp|chime|payment|received|sent|recv|from|to|ref|id|transfer|deposit|withdrawal|debit|credit|ach|web|pmt|trnsfr|online|mobile)$/i.test(
+        s.trim(),
+      );
+
+    const clean = (s: string) => s.trim().replace(/\s+/g, ' ');
+
+    // 1) Name explicitly after "from"/"to" (e.g. "ZELLE PAYMENT FROM JOHN DOE 12").
+    const fromMatch = desc.match(
+      /\b(?:from|to)\s+([a-z][a-z'.\- ]{2,40}?)(?=\s+\d|\s*$)/i,
+    );
+    if (fromMatch && !isNoise(fromMatch[1])) {
+      return this.titleCase(clean(fromMatch[1]));
+    }
+
+    // 2) Name after a payment-app token. Bank Zelle memos repeat the token:
+    //    "TD ZELLE RECEIVED <ref> Zelle KAREN EDWARDS" -> take the LAST match,
+    //    skipping captures that are themselves noise words like "received".
+    const appMatches = [
+      ...desc.matchAll(
+        /(?:zelle|venmo|cash\s*app|cashapp|chime)\*?(?:\s+payment)?\s+([a-z][a-z'.\- ]{2,40}?)(?=\s+\d|\s*$)/gi,
+      ),
+    ];
+    for (let i = appMatches.length - 1; i >= 0; i--) {
+      const cand = appMatches[i][1];
+      if (!isNoise(cand)) return this.titleCase(clean(cand));
+    }
+
+    return this.titleCase(fallback) ?? null;
+  }
+
+  private titleCase(s: string | null | undefined): string | null {
+    if (!s) return null;
+    const cleaned = s.trim().replace(/\s+/g, ' ');
+    if (!cleaned) return null;
+    // Leave acronyms/short codes alone; title-case word-like tokens.
+    return cleaned
+      .split(' ')
+      .map((w) =>
+        /^[A-Za-z][A-Za-z'.-]*$/.test(w)
+          ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+          : w,
+      )
+      .join(' ');
+  }
+
+  /**
    * Score a single candidate payment against an incoming transaction.
    * Higher = better. Returns null if it's not even worth considering.
    *

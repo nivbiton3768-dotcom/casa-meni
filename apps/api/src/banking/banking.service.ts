@@ -227,6 +227,47 @@ export class BankingService implements OnModuleInit {
     return { itemsUpdated: updated, transactionsAdded: added };
   }
 
+  /**
+   * Re-parse counterparty names from descriptions for transactions already in
+   * the DB (e.g. rows imported before the parser existed, or where Plaid only
+   * gave the generic payment-app name like "Zelle").
+   */
+  async backfillCounterparties(organizationId: string) {
+    const txns = await this.prisma.bankTransaction.findMany({
+      where: { organizationId },
+      select: { id: true, description: true, counterpartyName: true, merchantName: true },
+    });
+
+    const generic = new Set([
+      'zelle',
+      'venmo',
+      'cash app',
+      'cashapp',
+      'chime',
+      'transfer',
+    ]);
+
+    let updated = 0;
+    for (const t of txns) {
+      const current = (t.counterpartyName ?? '').trim().toLowerCase();
+      const needsParse = !current || generic.has(current);
+      if (!needsParse) continue;
+
+      const parsed = this.matcher.extractCounterparty(
+        t.description,
+        t.merchantName,
+      );
+      if (parsed && parsed.toLowerCase() !== current) {
+        await this.prisma.bankTransaction.update({
+          where: { id: t.id },
+          data: { counterpartyName: parsed },
+        });
+        updated += 1;
+      }
+    }
+    return { scanned: txns.length, updated };
+  }
+
   async syncByPlaidItem(itemId: string) {
     const account = await this.prisma.bankAccount.findFirst({
       where: { plaidItemId: itemId, provider: BankAccountProvider.PLAID },
@@ -419,10 +460,13 @@ export class BankingService implements OnModuleInit {
           amountCents,
           description: t.name ?? 'Bank transaction',
           merchantName: t.merchant_name ?? null,
-          counterpartyName:
-            t.counterparties && t.counterparties.length > 0
-              ? t.counterparties[0].name ?? null
-              : t.merchant_name ?? null,
+          counterpartyName: this.matcher.extractCounterparty(
+            t.name,
+            t.merchant_name ??
+              (t.counterparties && t.counterparties.length > 0
+                ? t.counterparties[0].name
+                : null),
+          ),
           date: new Date(t.date),
           category: t.personal_finance_category?.primary ?? null,
         },

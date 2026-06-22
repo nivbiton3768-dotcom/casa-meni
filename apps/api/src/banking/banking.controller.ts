@@ -63,6 +63,13 @@ export class BankingController {
     return this.service.registerWebhooks(organizationId);
   }
 
+  @Post('backfill-counterparties')
+  backfillCounterparties(
+    @CurrentUser('organizationId') organizationId: string,
+  ) {
+    return this.service.backfillCounterparties(organizationId);
+  }
+
   @Get('accounts')
   listAccounts(@CurrentUser('organizationId') organizationId: string) {
     return this.service.listAccounts(organizationId);
