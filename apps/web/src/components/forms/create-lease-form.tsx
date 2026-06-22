@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import { useApi } from '@/hooks/use-api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,11 +26,20 @@ interface Tenant {
 interface CreateLeaseFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  /** When set, only this property's vacant units are selectable. */
+  propertyId?: string;
+  /** Pre-select a specific unit (e.g. when adding a tenant to one unit). */
+  defaultUnitId?: string;
 }
 
-export function CreateLeaseForm({ onSuccess, onCancel }: CreateLeaseFormProps) {
+export function CreateLeaseForm({
+  onSuccess,
+  onCancel,
+  propertyId,
+  defaultUnitId,
+}: CreateLeaseFormProps) {
   const { success, error: showError } = useToast();
-  const { data: vacantUnits } = useApi<VacantUnit[]>('/leases/vacant-units');
+  const { data: allVacantUnits } = useApi<VacantUnit[]>('/leases/vacant-units');
   const { data: tenants } = useApi<Tenant[]>('/leases/tenants');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -46,10 +55,28 @@ export function CreateLeaseForm({ onSuccess, onCancel }: CreateLeaseFormProps) {
     depositAmount: '',
   });
 
+  const vacantUnits = propertyId
+    ? allVacantUnits?.filter((u) => u.property.id === propertyId)
+    : allVacantUnits;
+
   const update = (field: string, value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
   const selectedUnit = vacantUnits?.find((u) => u.id === form.unitId);
+
+  useEffect(() => {
+    if (defaultUnitId && !form.unitId && allVacantUnits) {
+      const unit = allVacantUnits.find((u) => u.id === defaultUnitId);
+      if (unit) {
+        setForm((prev) => ({
+          ...prev,
+          unitId: unit.id,
+          rentAmount: (unit.rentAmountCents / 100).toFixed(2),
+          depositAmount: (unit.rentAmountCents / 100).toFixed(2),
+        }));
+      }
+    }
+  }, [defaultUnitId, allVacantUnits, form.unitId]);
 
   const handleUnitChange = (unitId: string) => {
     update('unitId', unitId);

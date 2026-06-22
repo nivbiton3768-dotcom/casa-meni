@@ -44,6 +44,15 @@ export class LeasesController {
     return this.leasesService.findOne(orgId, id);
   }
 
+  @Patch(':id/end')
+  @Roles(Role.OWNER, Role.PROPERTY_MANAGER)
+  endLease(
+    @CurrentUser('organizationId') orgId: string,
+    @Param('id') id: string,
+  ) {
+    return this.leasesService.endLease(orgId, id);
+  }
+
   @Patch('payments/:paymentId/pay')
   @Roles(Role.OWNER, Role.PROPERTY_MANAGER, Role.ACCOUNTANT)
   recordPayment(

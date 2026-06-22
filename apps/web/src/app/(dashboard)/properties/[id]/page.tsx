@@ -7,7 +7,9 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { AddUnitForm } from '@/components/forms/add-unit-form';
-import { formatCents, cn } from '@/lib/utils';
+import { CreateLeaseForm } from '@/components/forms/create-lease-form';
+import { useToast } from '@/components/ui/toast';
+import { formatCents, cn, apiFetch } from '@/lib/utils';
 import {
   ArrowLeft,
   Plus,
@@ -22,6 +24,11 @@ import {
   FileText,
   ArrowUpRight,
   ArrowDownRight,
+  Mail,
+  Calendar,
+  UserPlus,
+  UserMinus,
+  ChevronRight,
 } from 'lucide-react';
 
 interface Tenant {
@@ -144,7 +151,36 @@ export default function PropertyDetailPage({
   const { data: property, loading, refetch } = useApi<PropertyDetail>(
     `/properties/${id}`,
   );
+  const toast = useToast();
   const [showAddUnit, setShowAddUnit] = useState(false);
+  const [leaseUnitId, setLeaseUnitId] = useState<string | null>(null);
+  const [showNewLease, setShowNewLease] = useState(false);
+  const [endingLeaseId, setEndingLeaseId] = useState<string | null>(null);
+
+  const openNewLease = (unitId?: string) => {
+    setLeaseUnitId(unitId ?? null);
+    setShowNewLease(true);
+  };
+
+  const endLease = async (leaseId: string, tenantName: string) => {
+    if (
+      !confirm(
+        `End ${tenantName}'s lease? The unit will be marked vacant and any future unpaid rent will be removed.`,
+      )
+    ) {
+      return;
+    }
+    setEndingLeaseId(leaseId);
+    try {
+      await apiFetch(`/leases/${leaseId}/end`, { method: 'PATCH' });
+      toast.success('Lease ended', `${tenantName}'s unit is now vacant.`);
+      refetch();
+    } catch (err) {
+      toast.error('Failed to end lease', err instanceof Error ? err.message : '');
+    } finally {
+      setEndingLeaseId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -215,17 +251,32 @@ export default function PropertyDetailPage({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          {/* Units */}
+          {/* Units & Tenants */}
           <Card>
             <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-gray-400" />
-                Units ({property.units.length})
+                Units &amp; Tenants ({property.units.length})
               </CardTitle>
-              <Button size="sm" onClick={() => setShowAddUnit(true)} className="w-full sm:w-auto">
-                <Plus className="mr-1 h-3.5 w-3.5" />
-                Add Unit
-              </Button>
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setShowAddUnit(true)}
+                  className="w-full sm:w-auto"
+                >
+                  <Plus className="mr-1 h-3.5 w-3.5" />
+                  Add Unit
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => openNewLease()}
+                  className="w-full sm:w-auto"
+                >
+                  <UserPlus className="mr-1 h-3.5 w-3.5" />
+                  New Lease
+                </Button>
+              </div>
             </CardHeader>
 
             <Modal
@@ -243,6 +294,28 @@ export default function PropertyDetailPage({
                 onCancel={() => setShowAddUnit(false)}
               />
             </Modal>
+
+            <Modal
+              open={showNewLease}
+              onClose={() => setShowNewLease(false)}
+              title={leaseUnitId ? 'Add Tenant to Unit' : 'New Lease'}
+              size="lg"
+            >
+              <CreateLeaseForm
+                propertyId={property.id}
+                defaultUnitId={leaseUnitId ?? undefined}
+                onSuccess={() => {
+                  setShowNewLease(false);
+                  setLeaseUnitId(null);
+                  refetch();
+                }}
+                onCancel={() => {
+                  setShowNewLease(false);
+                  setLeaseUnitId(null);
+                }}
+              />
+            </Modal>
+
             <CardContent>
               {property.units.length === 0 ? (
                 <p className="text-sm text-gray-500">No units configured.</p>
@@ -251,32 +324,93 @@ export default function PropertyDetailPage({
                   {property.units.map((unit) => {
                     const activeLease = unit.leases[0];
                     return (
-                      <div key={unit.id} className="flex items-start justify-between gap-3 py-3">
-                        <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-medium text-gray-900">
-                              Unit {unit.unitNumber}
-                            </span>
-                            <span
-                              className={cn(
-                                'rounded-full px-2 py-0.5 text-xs font-medium',
-                                statusColors[unit.status] || 'bg-gray-100 text-gray-600',
-                              )}
-                            >
-                              {unit.status.toLowerCase()}
-                            </span>
+                      <div key={unit.id} className="py-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-medium text-gray-900">
+                                Unit {unit.unitNumber}
+                              </span>
+                              <span
+                                className={cn(
+                                  'rounded-full px-2 py-0.5 text-xs font-medium',
+                                  statusColors[unit.status] || 'bg-gray-100 text-gray-600',
+                                )}
+                              >
+                                {unit.status.toLowerCase()}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500">
+                              {unit.bedrooms}bd / {unit.bathrooms}ba
+                              {unit.sqft ? ` · ${unit.sqft.toLocaleString()} sqft` : ''}
+                            </p>
                           </div>
-                          <p className="text-xs text-gray-500">
-                            {unit.bedrooms}bd / {unit.bathrooms}ba
-                            {unit.sqft ? ` · ${unit.sqft.toLocaleString()} sqft` : ''}
-                            {activeLease
-                              ? ` · ${activeLease.tenant.name}`
-                              : ''}
-                          </p>
+                          <span className="shrink-0 text-sm font-semibold text-gray-900">
+                            {formatCents(unit.rentAmountCents)}/mo
+                          </span>
                         </div>
-                        <span className="shrink-0 text-sm font-semibold text-gray-900">
-                          {formatCents(unit.rentAmountCents)}/mo
-                        </span>
+
+                        {activeLease ? (
+                          <div className="mt-3 rounded-lg border border-gray-100 bg-gray-50 p-3">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex min-w-0 items-start gap-3">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-purple-100 text-sm font-semibold text-purple-700">
+                                  {activeLease.tenant.name
+                                    .split(' ')
+                                    .map((n) => n[0])
+                                    .join('')
+                                    .slice(0, 2)
+                                    .toUpperCase()}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="truncate text-sm font-medium text-gray-900">
+                                    {activeLease.tenant.name}
+                                  </p>
+                                  <p className="flex items-center gap-1 truncate text-xs text-gray-500">
+                                    <Mail className="h-3 w-3 shrink-0" />
+                                    {activeLease.tenant.email}
+                                  </p>
+                                  <p className="mt-0.5 flex items-center gap-1 text-xs text-gray-400">
+                                    <Calendar className="h-3 w-3 shrink-0" />
+                                    {new Date(activeLease.startDate).toLocaleDateString()} —{' '}
+                                    {new Date(activeLease.endDate).toLocaleDateString()}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="mt-3 flex flex-wrap items-center gap-2">
+                              <Link
+                                href={`/tenants/leases/${activeLease.id}`}
+                                className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                              >
+                                View lease
+                                <ChevronRight className="h-3 w-3" />
+                              </Link>
+                              <button
+                                onClick={() =>
+                                  endLease(activeLease.id, activeLease.tenant.name)
+                                }
+                                disabled={endingLeaseId === activeLease.id}
+                                className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-white px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+                              >
+                                <UserMinus className="h-3 w-3" />
+                                {endingLeaseId === activeLease.id
+                                  ? 'Ending…'
+                                  : 'End lease'}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mt-2">
+                            <button
+                              onClick={() => openNewLease(unit.id)}
+                              className="inline-flex items-center gap-1 rounded-md border border-dashed border-gray-300 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:border-blue-400 hover:text-blue-600"
+                            >
+                              <UserPlus className="h-3 w-3" />
+                              Add tenant
+                            </button>
+                          </div>
+                        )}
                       </div>
                     );
                   })}

@@ -190,6 +190,38 @@ export class LeasesService {
     });
   }
 
+  /**
+   * Terminate an active lease early: mark it TERMINATED, free the unit, and
+   * remove future unpaid payments (past-due unpaid payments are kept on the
+   * ledger for record-keeping).
+   */
+  async endLease(organizationId: string, id: string) {
+    const lease = await this.prisma.lease.findFirst({
+      where: { id, organizationId },
+    });
+    if (!lease) throw new NotFoundException('Lease not found');
+    if (lease.status === 'TERMINATED') {
+      throw new BadRequestException('Lease is already terminated');
+    }
+
+    const now = new Date();
+    const [updated, voided] = await this.prisma.$transaction([
+      this.prisma.lease.update({
+        where: { id },
+        data: { status: 'TERMINATED', endDate: now },
+      }),
+      this.prisma.payment.deleteMany({
+        where: { leaseId: id, paidAt: null, dueDate: { gt: now } },
+      }),
+      this.prisma.unit.update({
+        where: { id: lease.unitId },
+        data: { status: 'VACANT' },
+      }),
+    ]);
+
+    return { ...updated, futurePaymentsVoided: voided.count };
+  }
+
   async getTenants(organizationId: string) {
     const users = await this.prisma.user.findMany({
       where: { organizationId, role: 'TENANT', isActive: true },
