@@ -222,6 +222,111 @@ export class LeasesService {
     return { ...updated, futurePaymentsVoided: voided.count };
   }
 
+  /**
+   * Update a tenant's profile (name/email/phone). The user must be a TENANT in
+   * this org. Email must stay unique within the org.
+   */
+  async updateTenant(
+    organizationId: string,
+    tenantId: string,
+    dto: { name?: string; email?: string; phone?: string },
+  ) {
+    const tenant = await this.prisma.user.findFirst({
+      where: { id: tenantId, organizationId, role: 'TENANT' },
+    });
+    if (!tenant) throw new NotFoundException('Tenant not found');
+
+    if (dto.email && dto.email.toLowerCase() !== tenant.email) {
+      const clash = await this.prisma.user.findFirst({
+        where: {
+          organizationId,
+          email: dto.email.toLowerCase(),
+          id: { not: tenantId },
+        },
+      });
+      if (clash) {
+        throw new BadRequestException(
+          'Another user already uses that email address',
+        );
+      }
+    }
+
+    const updated = await this.prisma.user.update({
+      where: { id: tenantId },
+      data: {
+        ...(dto.name !== undefined ? { name: dto.name } : {}),
+        ...(dto.email !== undefined
+          ? { email: dto.email.toLowerCase() }
+          : {}),
+        ...(dto.phone !== undefined ? { phone: dto.phone || null } : {}),
+      },
+      select: { id: true, name: true, email: true, phone: true },
+    });
+    return updated;
+  }
+
+  /**
+   * Move an active lease to a different vacant unit (same org). The tenant,
+   * payment history, dates and rent are preserved unless a new rent is given.
+   */
+  async transferLease(
+    organizationId: string,
+    leaseId: string,
+    dto: { newUnitId: string; rentAmountCents?: number },
+  ) {
+    const lease = await this.prisma.lease.findFirst({
+      where: { id: leaseId, organizationId },
+      include: { unit: true },
+    });
+    if (!lease) throw new NotFoundException('Lease not found');
+    if (lease.status !== 'ACTIVE') {
+      throw new BadRequestException('Only active leases can be transferred');
+    }
+    if (lease.unitId === dto.newUnitId) {
+      throw new BadRequestException('Lease is already on that unit');
+    }
+
+    const newUnit = await this.prisma.unit.findFirst({
+      where: { id: dto.newUnitId, property: { organizationId } },
+    });
+    if (!newUnit) throw new NotFoundException('Target unit not found');
+    if (newUnit.status === 'OCCUPIED') {
+      throw new BadRequestException('Target unit is already occupied');
+    }
+
+    const oldUnitId = lease.unitId;
+    const [updated] = await this.prisma.$transaction([
+      this.prisma.lease.update({
+        where: { id: leaseId },
+        data: {
+          unitId: dto.newUnitId,
+          ...(dto.rentAmountCents
+            ? { rentAmountCents: dto.rentAmountCents }
+            : {}),
+        },
+        include: { tenant: true, unit: { include: { property: true } } },
+      }),
+      this.prisma.unit.update({
+        where: { id: dto.newUnitId },
+        data: { status: 'OCCUPIED' },
+      }),
+      this.prisma.unit.update({
+        where: { id: oldUnitId },
+        data: { status: 'VACANT' },
+      }),
+      ...(dto.rentAmountCents
+        ? [
+            this.prisma.payment.updateMany({
+              where: { leaseId, paidAt: null, dueDate: { gt: new Date() } },
+              data: { amountCents: dto.rentAmountCents },
+            }),
+          ]
+        : []),
+    ]);
+
+    return updated;
+  }
+
   async getTenants(organizationId: string) {
     const users = await this.prisma.user.findMany({
       where: { organizationId, role: 'TENANT', isActive: true },

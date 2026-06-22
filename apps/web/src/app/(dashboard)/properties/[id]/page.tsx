@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { AddUnitForm } from '@/components/forms/add-unit-form';
 import { CreateLeaseForm } from '@/components/forms/create-lease-form';
+import { EditTenantForm } from '@/components/forms/edit-tenant-form';
+import { TransferLeaseForm } from '@/components/forms/transfer-lease-form';
 import { useToast } from '@/components/ui/toast';
 import { formatCents, cn, apiFetch } from '@/lib/utils';
 import {
@@ -29,12 +31,15 @@ import {
   UserPlus,
   UserMinus,
   ChevronRight,
+  Pencil,
+  ArrowLeftRight,
 } from 'lucide-react';
 
 interface Tenant {
   id: string;
   name: string;
   email: string;
+  phone?: string | null;
 }
 
 interface Lease {
@@ -156,6 +161,12 @@ export default function PropertyDetailPage({
   const [leaseUnitId, setLeaseUnitId] = useState<string | null>(null);
   const [showNewLease, setShowNewLease] = useState(false);
   const [endingLeaseId, setEndingLeaseId] = useState<string | null>(null);
+  const [editTenant, setEditTenant] = useState<Tenant | null>(null);
+  const [transferLease, setTransferLease] = useState<{
+    id: string;
+    tenantName: string;
+    rentCents: number;
+  } | null>(null);
 
   const openNewLease = (unitId?: string) => {
     setLeaseUnitId(unitId ?? null);
@@ -316,6 +327,44 @@ export default function PropertyDetailPage({
               />
             </Modal>
 
+            <Modal
+              open={!!editTenant}
+              onClose={() => setEditTenant(null)}
+              title="Edit Tenant"
+              size="md"
+            >
+              {editTenant && (
+                <EditTenantForm
+                  tenant={editTenant}
+                  onSuccess={() => {
+                    setEditTenant(null);
+                    refetch();
+                  }}
+                  onCancel={() => setEditTenant(null)}
+                />
+              )}
+            </Modal>
+
+            <Modal
+              open={!!transferLease}
+              onClose={() => setTransferLease(null)}
+              title="Move Tenant to Another Unit"
+              size="md"
+            >
+              {transferLease && (
+                <TransferLeaseForm
+                  leaseId={transferLease.id}
+                  tenantName={transferLease.tenantName}
+                  currentRentCents={transferLease.rentCents}
+                  onSuccess={() => {
+                    setTransferLease(null);
+                    refetch();
+                  }}
+                  onCancel={() => setTransferLease(null)}
+                />
+              )}
+            </Modal>
+
             <CardContent>
               {property.units.length === 0 ? (
                 <p className="text-sm text-gray-500">No units configured.</p>
@@ -386,6 +435,26 @@ export default function PropertyDetailPage({
                                 View lease
                                 <ChevronRight className="h-3 w-3" />
                               </Link>
+                              <button
+                                onClick={() => setEditTenant(activeLease.tenant)}
+                                className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                              >
+                                <Pencil className="h-3 w-3" />
+                                Edit tenant
+                              </button>
+                              <button
+                                onClick={() =>
+                                  setTransferLease({
+                                    id: activeLease.id,
+                                    tenantName: activeLease.tenant.name,
+                                    rentCents: activeLease.rentAmountCents,
+                                  })
+                                }
+                                className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                              >
+                                <ArrowLeftRight className="h-3 w-3" />
+                                Move unit
+                              </button>
                               <button
                                 onClick={() =>
                                   endLease(activeLease.id, activeLease.tenant.name)
